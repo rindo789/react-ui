@@ -697,7 +697,8 @@ export default class Form<P, S> extends TranslatedComponent<FormProps, FormState
     const lastIndexOfBackslash = this.props.model.lastIndexOf('/');
     const rawModelName = this.props.model.substring(lastIndexOfBackslash + 1);
     const modelInputName = rawModelName + '.' + inputName;
-    const invalid = this.state.invalidInputs.some((v: any) => String(v.name).toLowerCase() === String(modelInputName).toLowerCase() && v.id === (this.state.record.id ?? -1));
+
+    const invalid = Array.isArray(this.state.invalidInputs) ? this.state.invalidInputs.some((v: any) => String(v.name).toLowerCase() === String(modelInputName).toLowerCase() && v.id === (this.state.record.id ?? -1)) : false;
 
     // let customInputPropsWithoutOnchange = customInputProps;
     // delete customInputPropsWithoutOnchange.onChange;
@@ -1126,7 +1127,7 @@ export default class Form<P, S> extends TranslatedComponent<FormProps, FormState
           </div>
           {formTopMenu ? <div className="modal-top-menu">{formTopMenu}</div> : null}
           <div className={"modal-body " + formContentClassName}>
-            { this.state.invalidInputs.length != 0 ? this.renderErrorAlert('Please fix the errors below before saving the record.') : ''}
+            { Array.isArray(this.state.invalidInputs) && this.state.invalidInputs.length != 0 ? this.renderErrorAlert('Please fix the errors below before saving the record.') : ''}
             {formContent}
           </div>
           {formFooter ? <div className="modal-footer">{formFooter}</div> : null}

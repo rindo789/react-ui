@@ -914,7 +914,7 @@ export default class Table<P, S> extends TranslatedComponent<TableProps, TableSt
       inputName: columnName,
       value: columnValue,
       showInlineEditingButtons: false,
-      invalid: this.state.invalidInputs.some((v: any) => String(v.name).toLowerCase() === String(modelInputName).toLowerCase() && v.id === (data.id ?? -1)),
+      invalid: Array.isArray(this.state.invalidInputs) ? this.state.invalidInputs.some((v: any) => String(v.name).toLowerCase() === String(modelInputName).toLowerCase() && v.id === (data.id ?? -1)) : false,
       isInlineEditing: this.props.isInlineEditing,
       description: (this.state.description && this.state.description.inputs ? this.state.description?.inputs[columnName] : null),
     };
