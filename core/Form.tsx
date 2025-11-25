@@ -577,7 +577,7 @@ export default class Form<P, S> extends TranslatedComponent<FormProps, FormState
     >
       {tab.icon ? <span className="icon"><i className={tab.icon}></i></span> : null}
       {tabTitle ? <span className={"text " + (tab.isCustom ? "italic" : "")}>{tabTitle}</span> : null}
-    </button>
+    </button>    
   }
 
   renderTopMenu(): null|JSX.Element {
@@ -697,9 +697,7 @@ export default class Form<P, S> extends TranslatedComponent<FormProps, FormState
     const lastIndexOfBackslash = this.props.model.lastIndexOf('/');
     const rawModelName = this.props.model.substring(lastIndexOfBackslash + 1);
     const modelInputName = rawModelName + '.' + inputName;
-    const invalid = this.state.invalidInputs.length > 0 ?
-      this.state.invalidInputs.some((v: any) => String(v.name).toLowerCase() === String(modelInputName).toLowerCase() && v.id === (this.state.record.id ?? -1))
-      : false;
+    const invalid = this.state.invalidInputs.some((v: any) => String(v.name).toLowerCase() === String(modelInputName).toLowerCase() && v.id === (this.state.record.id ?? -1));
 
     // let customInputPropsWithoutOnchange = customInputProps;
     // delete customInputPropsWithoutOnchange.onChange;
@@ -827,7 +825,7 @@ export default class Form<P, S> extends TranslatedComponent<FormProps, FormState
   }
 
   renderSaveButton(): null|JSX.Element {
-    let showButton =
+    let showButton = 
       this.state.description?.ui?.showSaveButton
       && (
         this.state.creatingRecord && this.state.permissions.canCreate
@@ -1128,7 +1126,7 @@ export default class Form<P, S> extends TranslatedComponent<FormProps, FormState
           </div>
           {formTopMenu ? <div className="modal-top-menu">{formTopMenu}</div> : null}
           <div className={"modal-body " + formContentClassName}>
-            {this.state.invalidInputs.length > 0 ? this.renderErrorAlert('Please fix the errors below before saving the record.') : ''}
+            { this.state.invalidInputs.length != 0 ? this.renderErrorAlert('Please fix the errors below before saving the record.') : ''}
             {formContent}
           </div>
           {formFooter ? <div className="modal-footer">{formFooter}</div> : null}
