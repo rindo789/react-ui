@@ -42,12 +42,12 @@ export default class UserSelect extends LookupInput<UserSelectInputProps, UserSe
 
   renderInputElement() {
     if (!this.state.data) return <>...</>;
-    return <div className='flex gap-2 items-center'>
-      <i className="fas fa-user"></i>
-      <div ref={this.refInput} className="btn-group gap-1">
+    return <div className='flex flex-wrap gap-2 items-center'>
+      <div ref={this.refInput} className="btn-group gap-1 flex-wrap">
         {Object.keys(this.state.data).map((key: any) => {
           const user = this.state.data[key] ?? null;
           const userId = user.id ?? 0;
+          console.log(user);
           return <>
             <button
               key={key}
@@ -59,14 +59,22 @@ export default class UserSelect extends LookupInput<UserSelectInputProps, UserSe
                 if (!this.state.readonly) this.onChange((this.state.value == userId ? null : userId));
               }}
             >
-              <span className="text">{user.nick ?? (user.email ?? (user.last_name ?? '-'))}</span>
+              <span className="text flex gap-2">
+                {user.photo ?
+                  <img
+                    src={globalThis.main.config.uploadUrl + '/' + user.photo}
+                    className='max-w-4 max-h-4 rounded-xl'
+                  />
+                : null}
+                <span className='text-xs'>{user.first_name} {user.last_name}</span>
+              </span>
               <span className="hover min-w-48">
-                <div className='flex gap-2'>
+                <div className='flex flex-col gap-2'>
                   <div className='grow'>
                     {user.photo ?
                       <img
                         src={globalThis.main.config.uploadUrl + '/' + user.photo}
-                        className='w-12 max-h-12 rounded-xl'
+                        className='max-w-12 max-h-12 rounded-xl'
                       />
                     : <div className='bg-gray-200 rounded-xl w-12 h-12 flex items-center justify-center'>
                       <i className='fas fa-user'></i>
@@ -78,6 +86,16 @@ export default class UserSelect extends LookupInput<UserSelectInputProps, UserSe
                     <div>{user.first_name ?? ''} {user.last_name ?? ''} </div>
                   </div>
                 </div>
+                {user.TEAMS.map((team: any, key: any) => {
+                  return <div
+                    key={key}
+                    className='badge flex gap-2 items-center py-1'
+                    style={{borderLeft: '0.5em solid ' + team.color}}
+                  >
+                    <i className='fas fa-users'></i>
+                    {team.name}
+                  </div>;
+                })}
               </span>
             </button>
           </>;
