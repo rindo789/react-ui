@@ -98,9 +98,9 @@ export default class HubletoTableColumnsCustomize<P, S> extends Component {
   render(): JSX.Element {
     return (
       <>
-        <div className="modal-header">
+        <div className="modal-header active">
           <div className="modal-header-left">
-            <button className="btn btn-edit" onClick={() => this.saveRecord()}>
+            <button className="btn btn-add" onClick={() => this.saveRecord()}>
               <span className="icon">
                 <i className="fas fa-save"></i>
               </span>
@@ -149,7 +149,7 @@ export default class HubletoTableColumnsCustomize<P, S> extends Component {
                       }))
                     }
                   >
-                    <div>
+                    <div className='flex flex-row'>
                       <span className="icon">
                         <i className={`text-gray-500 fa fa-ellipsis-vertical`}></i>
                       </span>
