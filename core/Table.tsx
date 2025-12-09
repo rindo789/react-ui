@@ -1296,6 +1296,16 @@ export default class Table<P, S> extends TranslatedComponent<TableProps, TableSt
               style={this.cellCssStyle(columnName, column, data)}
             >
               {this.renderCell(columnName, column, data, options)}
+              <div className='cell-buttons'>
+                <button
+                  className='btn btn-small btn-white'
+                  title='Copy cell contant to clipboard'
+                  onClick={(e) => {
+                    navigator.clipboard.writeText(data['_LOOKUP[' + columnName + ']'] ?? (data[columnName] ?? ''));
+                    e.stopPropagation();
+                  }}
+                ><span className='icon'><i className='fas fa-copy'></i></span></button>
+              </div>
             </div>
           );
         }}

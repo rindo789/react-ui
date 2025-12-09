@@ -47,7 +47,6 @@ export default class UserSelect extends LookupInput<UserSelectInputProps, UserSe
         {Object.keys(this.state.data).map((key: any) => {
           const user = this.state.data[key] ?? null;
           const userId = user.id ?? 0;
-          console.log(user);
           return <>
             <button
               key={key}

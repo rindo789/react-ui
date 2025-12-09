@@ -5,6 +5,8 @@ import HubletoApp from '@hubleto/react-ui/ext/HubletoApp'
 
 //@ts-ignore
 import WorkflowSelector from '@hubleto/apps/Workflow/Components/WorkflowSelector';
+import { content } from "html2canvas/dist/types/css/property-descriptors/content";
+import moment from "moment";
 
 export interface HubletoFormProps extends FormProps {
   icon?: string,
@@ -15,6 +17,7 @@ export interface HubletoFormProps extends FormProps {
   junctionSourceRecordId?: number,
   junctionSaveEndpoint?: string,
   renderWorkflowUi?: boolean,
+  timeline?: Array<any>,
 }
 export interface HubletoFormState extends FormState {
   icon?: string,
@@ -194,5 +197,72 @@ export default class HubletoForm<P, S> extends Form<HubletoFormProps,HubletoForm
       return topMenuWithDynamicMenu;
     }
   }
+
+  renderContent(): null|JSX.Element {
+    const R = this.state.record;
+    let content = super.renderContent();
+    let timeline = null;
+    let timelinePointsUnsorted = {};
+
+    if (this.props.timeline) {
+      this.props.timeline.map((aboutEntry, key) => {
+        const entries = aboutEntry.data(this) ?? [];
+        
+        entries.map((entry, key) => {
+          timelinePointsUnsorted[aboutEntry.timestampFormatter(entry)] = {
+            icon: aboutEntry.icon,
+            color: aboutEntry.color,
+            value: aboutEntry.valueFormatter ? aboutEntry.valueFormatter(entry) : null,
+            userName: aboutEntry.userNameFormatter ? aboutEntry.userNameFormatter(entry) : null,
+          };
+        });
+      });
+    }
+
+    let timelinePoints = Object.keys(timelinePointsUnsorted)
+      .sort() // Sort the keys alphabetically
+      .reverse()
+      .reduce((obj, key) => {
+        obj[key] = timelinePointsUnsorted[key]; // Rebuild the object with sorted keys
+        return obj;
+      }, {});
+
+    if (JSON.stringify(timelinePoints) != '{}') {
+      let now = moment();
+      timeline = Object.keys(timelinePoints).map((key) => {
+        const days = moment(now).diff(moment(key), 'days');
+        const entry = timelinePoints[key];
+
+        now = moment(key);
+
+        return <>
+          {days <= 0 ? null : <div className='badge text-xs'>{days} day(s)</div>}
+          <div
+            className='
+              flex flex-col items-center p-2 border-l border-l-4 overflow-hidden hover:shadow-sm
+              justify-center bg-white
+            '
+            style={{borderColor: entry.color}}
+          >
+            {/* <div className='text-xs'><i className={entry.icon}></i></div> */}
+            <div className='text-xs font-bold text-nowrap'>{key}</div>
+            <div className='p-2 text-center text-xs'>{entry.value}</div>
+            {/* {entry.userName ? <div className='badge text-xs'>@{entry.userName}</div> : null} */}
+          </div>
+        </>;
+      });
+    }
+
+    if (timeline) {
+      return <div className='flex gap-2'>
+        <div className='grow'>{content}</div>
+        <div className='shrink p-2 flex flex-col items-center gap-2 max-w-48'>{timeline}</div>
+      </div>
+    } else {
+      return content;
+    }
+
+  }
+
 
 }
