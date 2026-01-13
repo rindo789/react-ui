@@ -1,3 +1,4 @@
+import HtmlFrame from "@hubleto/react-ui/core/HtmlFrame";
 import React, { Component } from 'react'
 import { Input, InputProps, InputState } from '../Input'
 import * as uuid from 'uuid';
@@ -10,6 +11,7 @@ import 'prismjs/themes/prism.css'; //Example style, you can use another
 interface TextareaWithHtmlPreviewInputState extends InputState {
   textareaValue: string,
   previewInvalidated: boolean
+  isFullscreen: boolean;
 }
 
 export default class TextareaWithHtmlPreview extends Input<InputProps, TextareaWithHtmlPreviewInputState> {
@@ -21,48 +23,58 @@ export default class TextareaWithHtmlPreview extends Input<InputProps, TextareaW
 
   state: TextareaWithHtmlPreviewInputState;
 
+  refPreview: any;
+
   constructor(props: InputProps) {
     super(props);
+
+    this.refPreview = React.createRef();
 
     this.state = {
       ...this.state, // Parent state
       isInitialized: true,
       textareaValue: this.state.value,
       previewInvalidated: false,
+      isFullscreen: false,
     };
   }
 
   renderInputElement() {
-    return <div className='flex gap-2 w-full'>
-      <div className={'w-1/2 card ' + (this.state.previewInvalidated ? 'card-danger' : '')}>
-        <div className='card-header'>
-          Preview
-        </div>
-        <div className='card-body'>
-          {this.state.previewInvalidated
-            ? <button
-              className='btn btn-danger'
-              onClick={() => {
-                const sanitized = DOMPurify.sanitize(this.state.textareaValue);
-                this.setState({textareaValue: sanitized, previewInvalidated: false});
-                this.onChange(sanitized);
-              }}
-            >
-              <span className='icon'><i className='fas fa-arrows-rotate'></i></span>
-              <span className='text'>Sanitize HTML and update preview</span>
-            </button>
-            : (this.state.value
-              ? <div dangerouslySetInnerHTML={{__html: this.state.value}}></div>
-              : <div className='bg-gray-100 text-center p-4'>No preview available</div>
-            )
-          }
-        </div>
-      </div>
-      <div className='w-1/2 card' style={{overflowX: 'auto'}}>
+    let editorStyle: any = {
+      overflow: 'auto',
+      fontFamily: 'monospace',
+      fontSize: 11,
+    };
+    let wrapperStyle: any = {};
+
+    if (this.state.isFullscreen) {
+      wrapperStyle.position = 'fixed';
+      wrapperStyle.left = '0px';
+      wrapperStyle.top = '0px';
+      wrapperStyle.width = '100vw';
+      wrapperStyle.height = '100vh';
+      wrapperStyle.background = 'white';
+      wrapperStyle.padding = '1em';
+      wrapperStyle.zIndex = 9999999;
+    }
+    return <div
+      className='flex gap-2 w-full'
+      style={wrapperStyle}
+    >
+      <div className='w-1/2 card'>
         <div className='card-header'>
           HTML content
+          <div>
+            <button
+              className='btn btn-small btn-transparent'
+              onClick={() => { this.setState({isFullscreen: !this.state.isFullscreen}); }}
+            >
+              <span className='icon'><i className='fas fa-expand'></i></span>
+              <span className='text'>{this.translate('Toggle fullscreen')}</span>
+            </button>
+          </div>
         </div>
-        <div className='card-body' style={{maxWidth: '600px'}}>
+        <div className='card-body flex flex-col overflow-y-auto'>
           {/* <textarea
             className='w-full min-h-[15em]'
             style={{fontFamily: 'courier', whiteSpace: 'nowrap', padding: '0.5em'}}
@@ -72,17 +84,27 @@ export default class TextareaWithHtmlPreview extends Input<InputProps, TextareaW
             }}
           /> */}
           <Editor
-            className="bg-slate-300"
+            className="bg-slate-100 w-full overflow-y"
             value={this.state.textareaValue ?? ''}
             onValueChange={(newValue) => {
-              this.setState({textareaValue: newValue, previewInvalidated: true});
+              this.setState({textareaValue: newValue});
+              this.onChange(newValue);
             }}
             highlight={code => highlight(code, languages.markup)}
             padding={10}
-            style={{
-              fontFamily: 'monospace',
-              fontSize: 11,
-            }}
+            style={editorStyle}
+          />
+        </div>
+      </div>
+      <div className={'w-1/2 card ' + (this.state.previewInvalidated ? 'card-danger' : '')}>
+        <div className='card-header'>
+          Preview
+        </div>
+        <div className='card-body'>
+          <HtmlFrame
+            ref={this.refPreview}
+            className='w-full h-full'
+            content={this.state.textareaValue}
           />
         </div>
       </div>

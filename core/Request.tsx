@@ -12,17 +12,17 @@ interface ApiError {
 class Request {
 
   getProjectUrl(): string {
-    if (!globalThis.main.config.projectUrl) {
+    if (!globalThis.hubleto.config.projectUrl) {
       console.warn('HubletoReactUi.Request: projectUrl is not set. Your AJAX requests might not work. To suppress this warning, set projectUrl to empty value.')
       console.warn('To set the value add a script tag in HTML head section and set window.configEnv.projectUrl.')
       console.warn('To suppress this warning, set may set projectUrl to an empty value.')
     };
 
-    return globalThis.main.config.projectUrl + '/';
+    return globalThis.hubleto.config.projectUrl + '/';
   }
 
   alertOnError(responseData: any) {
-    globalThis.main.showDialogWarning(responseData.errorHtml);
+    globalThis.hubleto.showDialogWarning(responseData.message);
   }
 
   public get<T>(
@@ -37,7 +37,7 @@ class Request {
     }).then(res => {
       const responseData: any = res.data;
       document.body.classList.remove("ajax-loading");
-      if (responseData.errorHtml) {
+      if (responseData.status == 'error') {
         this.alertOnError(responseData);
         if (errorCallback) errorCallback(responseData);
       } else if (successCallback) successCallback(responseData);
@@ -57,7 +57,7 @@ class Request {
     }).then(res => {
       const responseData: any = res.data;
       document.body.classList.remove("ajax-loading");
-      if (responseData.errorHtml) {
+      if (responseData.status == 'error') {
         this.alertOnError(responseData);
         if (errorCallback) errorCallback(responseData);
       } else if (successCallback) successCallback(responseData);
@@ -75,7 +75,7 @@ class Request {
       params: queryParams
     }).then(res => {
       const responseData: any = res.data;
-      if (responseData.errorHtml) {
+      if (responseData.status == 'error') {
         this.alertOnError(responseData);
         if (errorCallback) errorCallback(responseData);
       } else if (successCallback) successCallback(responseData);
@@ -93,7 +93,7 @@ class Request {
       params: queryParams
     }).then(res => {
       const responseData: any = res.data;
-      if (responseData.errorHtml) {
+      if (responseData.status == 'error') {
         this.alertOnError(responseData);
         if (errorCallback) errorCallback(responseData);
       } else if (successCallback) successCallback(responseData);
@@ -110,7 +110,7 @@ class Request {
       params: queryParams
     }).then(res => {
       const responseData: any = res.data;
-      if (responseData.errorHtml) {
+      if (responseData.status == 'error') {
         this.alertOnError(responseData);
         if (errorCallback) errorCallback(responseData);
       } else if (successCallback) successCallback(responseData);
@@ -122,34 +122,37 @@ class Request {
     err: AxiosError<ApiError>,
     errorCallback?: (data: any) => void
   ) {
+    console.log(err);
     if (err.response) {
-      if (err.response.status == 500) {
-        this.fatalErrorNotification(err.response.data);
-      } else {
-        this.fatalErrorNotification(err.response.data);
-        console.error('HubletoReactUi: ' + err.code, err.config?.url, err.config?.params, err.response.data);
-        if (errorCallback) errorCallback(err.response);
-      }
+      this.fatalErrorNotification(url, err.response.data);
+      if (errorCallback) errorCallback(err.response);
     } else {
       console.error('HubletoReactUi: Request @ ' + url + ' unknown error.');
       console.error(err);
-      // this.fatalErrorNotification("Unknown error");
     }
   }
 
-  private fatalErrorNotification(error: any) {
+  private fatalErrorNotification(url: string, error: any) {
+    console.error('HubletoReactUi request @ ' + url + ' finished with error: ', error);
+
     if (typeof error == 'string') {
-      globalThis.main.showDialogDanger(error);
+      globalThis.hubleto.showDialogDanger(error);
     } else {
       switch(error.code) {
         case 87335:
-          // globalThis.main.showDialogWarning(globalThis.main.getValidationErrorMessage(error.message));
+          // globalThis.hubleto.showDialogWarning(globalThis.hubleto.getValidationErrorMessage(error.message));
           break;
         case 23000:
-          globalThis.main.showDialogDanger(globalThis.main.getDuplicateEntryErrorMessage(error.message));
+          globalThis.hubleto.showDialogDanger(globalThis.hubleto.getDuplicateEntryErrorMessage(error.message));
           break;
         default:
-          globalThis.main.showDialogDanger(globalThis.main.getGenericErrorMessage(error, error.code))
+          let content = globalThis.hubleto.getGenericErrorMessage(
+            error.message,
+            error.code,
+            url
+          );
+          globalThis.hubleto.showDialogDanger(content);
+        break;
 
       }
     }

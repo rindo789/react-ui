@@ -90,7 +90,7 @@ export class Input<P, S> extends TranslatedComponent<InputProps, InputState> {
     this.refValueElement = React.createRef();
     this.refInput = React.createRef();
 
-    globalThis.main.reactElements[this.props.uid] = this;
+    globalThis.hubleto.reactElements[this.props.uid] = this;
 
     const isModified: boolean = props.isModified ?? false;
     const isInitialized: boolean = props.isInitialized ?? false;
@@ -276,7 +276,7 @@ export class Input<P, S> extends TranslatedComponent<InputProps, InputState> {
     if (!this.state.isInitialized) return this.renderLoadingInfo();
 
     try {
-      globalThis.main.setTranslationContext(this.translationContext);
+      globalThis.hubleto.setTranslationContext(this.translationContext);
 
       return (
         <div

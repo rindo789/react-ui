@@ -15,7 +15,9 @@ export interface ModalProps {
   isFullscreen?: boolean,
 }
 
-interface ModalState {
+export interface ModalState {
+  stackUid?: string,
+  isActive: boolean,
   uid: string,
   type: string,
   isOpen: boolean;
@@ -30,7 +32,7 @@ export default class Modal extends Component<ModalProps> {
     super(props);
 
     if (this.props.uid) {
-      globalThis.main.reactElements[this.props.uid] = this;
+      globalThis.hubleto.reactElements[this.props.uid] = this;
     }
 
     this.state = this.getStateFromProps(props);
@@ -43,8 +45,18 @@ export default class Modal extends Component<ModalProps> {
       isOpen: props.isOpen ?? false,
       title: props.title,
       isFullscreen: props.isFullscreen,
+      stackUid: uuid.v4(),
+      isActive: false,
     };
   };
+
+  componentDidMount() {
+    globalThis.hubleto.addModalToStack(this);
+  }
+
+  componentWillUnmount() {
+    globalThis.hubleto.removeModalFromStack(this);
+  }
 
   /**
    * This function trigger if something change, for Form id of record
@@ -56,6 +68,10 @@ export default class Modal extends Component<ModalProps> {
     ) {
       this.setState(this.getStateFromProps(this.props));
     }
+  }
+
+  close() {
+    if (this.props.onClose) this.props.onClose(this);
   }
 
   render(): JSX.Element {

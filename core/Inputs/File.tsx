@@ -53,7 +53,7 @@ export default class File extends Input<FileInputProps, FileInputState> {
       if (this.state.value.fileData) {
         return this.state.value.fileData;
       } else if (this.state.value) {
-        return globalThis.main.config.uploadUrl + '/' + this.state.value;
+        return globalThis.hubleto.config.uploadUrl + '/' + this.state.value;
       } else {
         return '';
       }

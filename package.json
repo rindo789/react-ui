@@ -1,6 +1,6 @@
 {
   "name": "@hubleto/react-ui",
-  "version": "1.1.22",
+  "version": "1.2.0",
   "description": "A React-based UI for Hubleto framework",
   "main": "index.js",
   "scripts": {

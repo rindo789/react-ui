@@ -61,18 +61,21 @@ export default class UserSelect extends LookupInput<UserSelectInputProps, UserSe
               <span className="text flex gap-2">
                 {user.photo ?
                   <img
-                    src={globalThis.main.config.uploadUrl + '/' + user.photo}
+                    src={globalThis.hubleto.config.uploadUrl + '/' + user.photo}
                     className='max-w-4 max-h-4 rounded-xl'
                   />
                 : null}
-                <span className='text-xs'>{user.first_name} {user.last_name}</span>
+                <span className='text-xs'>{
+                  (Array.from(user.first_name ?? '')[0]).toString()
+                  + (Array.from(user.last_name ?? '')[0]).toString()
+                }</span>
               </span>
               <span className="hover min-w-48">
                 <div className='flex flex-col gap-2'>
                   <div className='grow'>
                     {user.photo ?
                       <img
-                        src={globalThis.main.config.uploadUrl + '/' + user.photo}
+                        src={globalThis.hubleto.config.uploadUrl + '/' + user.photo}
                         className='max-w-12 max-h-12 rounded-xl'
                       />
                     : <div className='bg-gray-200 rounded-xl w-12 h-12 flex items-center justify-center'>

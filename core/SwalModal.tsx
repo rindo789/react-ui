@@ -11,7 +11,7 @@ export function SwalModalPageLarge(
 ): void {
   const iframeContent = `
     <iframe 
-      src="` + globalThis.main.config.projectUrl + params.url + `" 
+      src="` + globalThis.hubleto.config.projectUrl + params.url + `" 
       width="100%" 
       height="800px" 
       frameborder="0"

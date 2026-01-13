@@ -11,7 +11,7 @@ export interface LookupInputProps extends InputProps {
   endpoint?: string,
   customEndpointParams?: any,
   urlAdd?: string,
-  uiStyle?: 'default' | 'select' | 'buttons';
+  uiStyle?: 'default' | 'select' | 'buttons' | 'buttons-vertical';
 }
 
 export interface LookupInputState extends InputState {
@@ -42,7 +42,7 @@ export default class Lookup<P, S> extends Input<LookupInputProps, LookupInputSta
           ? props.endpoint
           : (props.description && props.description.endpoint
             ? props.description.endpoint
-            : (globalThis.main.config.defaultLookupEndpoint ?? 'api/record/lookup')
+            : (globalThis.hubleto.config.defaultLookupEndpoint ?? 'api/record/lookup')
           )
       ,
       model: props.model ? props.model : (props.description && props.description.model ? props.description.model : ''),
@@ -131,7 +131,7 @@ export default class Lookup<P, S> extends Input<LookupInputProps, LookupInputSta
         >
           <span className={"text " + (value._LOOKUP_CLASS ? value._LOOKUP_CLASS : "text-primary")}>{value._LOOKUP}</span>
         </a>
-        {urlDetail && this.state.value ? <a className="btn btn-transparent ml-2" target="_blank" href={globalThis.main.config.projectUrl + "/" + urlDetail}>
+        {urlDetail && this.state.value ? <a className="btn btn-transparent ml-2" target="_blank" href={globalThis.hubleto.config.projectUrl + "/" + urlDetail}>
           <span className="icon"><i className="fas fa-arrow-up-right-from-square"></i></span>
         </a> : null}
       </>;
@@ -161,8 +161,11 @@ export default class Lookup<P, S> extends Input<LookupInputProps, LookupInputSta
           {Object.keys(this.state.data).map((key: any) => this._renderOption(key))}
         </select>
       </>;
-    } else if (this.props.uiStyle == 'buttons') {
-      return <div ref={this.refInput} className="btn-group gap-1">{Object.keys(this.state.data).map((key: any) => {
+    } else if (this.props.uiStyle == 'buttons' || this.props.uiStyle == 'buttons-vertical') {
+      return <div
+        ref={this.refInput}
+        className={"btn-group gap-1 " + (this.props.uiStyle == 'buttons-vertical' ? " flex-col w-full" : "")}
+      >{Object.keys(this.state.data).map((key: any) => {
         const value = this.state.data ? (this.state.data[key]?.id ?? 0) : 0;
         const lookup = this.state.data ? (this.state.data[key]?._LOOKUP ?? '') : '';
         const color = this.state.data ? (this.state.data[key]?._LOOKUP_COLOR ?? '') : '';
@@ -172,7 +175,7 @@ export default class Lookup<P, S> extends Input<LookupInputProps, LookupInputSta
               "btn " + (this.state.readonly && this.state.value != value ? "btn-disabled" : "")
               + " " + (this.state.value == value ? "btn-primary" : "btn-transparent")
             }
-            style={{borderLeft: "0.5em solid " + color}}
+            style={{borderLeft: (color ? "0.5em solid " + color : "")}}
             onClick={() => { if (!this.state.readonly) this.onChange((this.state.value == value ? null : value)); }}
           >
             <span className="text">{lookup}</span>
@@ -203,10 +206,10 @@ export default class Lookup<P, S> extends Input<LookupInputProps, LookupInputSta
           menuPosition="fixed"
           menuPortalTarget={document.body}
         />
-        {urlDetail ? <a className="btn btn-transparent" target="_blank" href={globalThis.main.config.projectUrl + "/" + urlDetail}>
+        {urlDetail ? <a className="btn btn-transparent" target="_blank" href={globalThis.hubleto.config.projectUrl + "/" + urlDetail}>
           <span className="icon"><i className="fas fa-arrow-up-right-from-square"></i></span>
         </a> : null}
-        {this.props.urlAdd ? <a className="btn btn-transparent ml-2" target="_blank" href={globalThis.main.config.projectUrl + "/" + this.props.urlAdd}>
+        {this.props.urlAdd && !this.state.readonly ? <a className="btn btn-transparent ml-2" target="_blank" href={globalThis.hubleto.config.projectUrl + "/" + this.props.urlAdd}>
           <span className="icon"><i className="fas fa-plus"></i></span>
         </a> : null}
       </>;

@@ -106,17 +106,17 @@ class Dispatch {
   private fatalErrorNotification(error: any) {
     // todo: extract this to some kind of error handler, copy of this is located in Request.tsx
     if (typeof error == 'string') {
-      globalThis.main.showDialogDanger(error);
+      globalThis.hubleto.showDialogDanger(error);
     } else {
       switch(error.code) {
         case 87335:
-          // globalThis.main.showDialogWarning(globalThis.main.getValidationErrorMessage(error));
+          // globalThis.hubleto.showDialogWarning(globalThis.hubleto.getValidationErrorMessage(error));
           break;
         case 23000:
-          globalThis.main.showDialogDanger(globalThis.main.getDuplicateEntryErrorMessage(error));
+          globalThis.hubleto.showDialogDanger(globalThis.hubleto.getDuplicateEntryErrorMessage(error));
           break;
         default:
-          globalThis.main.showDialogDanger(globalThis.main.getGenericErrorMessage(error, error.code))
+          globalThis.hubleto.showDialogDanger(globalThis.hubleto.getGenericErrorMessage(error, error.code))
 
       }
     }

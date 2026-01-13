@@ -18,7 +18,12 @@ const Option = (innerProps, isDisabled) => {
     <components.Option {...innerProps}>
       <div>{innerProps.data.label}</div>
       <div className="text-xs">{innerProps.data.description}</div>
-      <div className="text-xs text-gray-300 dark:text-primary">{innerProps.data.APP_NAMESPACE}</div>
+      {innerProps.data.APP_SHORT_NAME ? 
+        <div className="badge badge-extra-small text-xs">
+          <i className={"pr-2 fas fa-" + innerProps.data.APP_ICON}></i>
+          {innerProps.data.APP_SHORT_NAME}
+        </div>
+      : null}
     </components.Option>
   )
 }
@@ -33,7 +38,7 @@ export default class HubletoSearch<P, S> extends Component<HubletoSearchProps, H
     super(props);
 
     this.searchRef = React.createRef();
-    globalThis.main.reactElements['global-fulltext-search'] = this;
+    globalThis.hubleto.reactElements['global-fulltext-search'] = this;
 
     this.state = {
       // query: '',
@@ -60,7 +65,7 @@ export default class HubletoSearch<P, S> extends Component<HubletoSearchProps, H
     // let query = this.state.query;
     if (item) {
       if (item.url) {
-        location.href = globalThis.main.config.projectUrl + '/' + item.url;
+        location.href = globalThis.hubleto.config.projectUrl + '/' + item.url;
       }
       // if (item.autocomplete) {
       //   console.log('setva', {id: 0, label: item.autocomplete});

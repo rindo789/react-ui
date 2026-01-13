@@ -4,8 +4,7 @@ import request from '@hubleto/react-ui/core/Request';
 import HubletoApp from '@hubleto/react-ui/ext/HubletoApp'
 
 //@ts-ignore
-import WorkflowSelector from '@hubleto/apps/Workflow/Components/WorkflowSelector';
-import { content } from "html2canvas/dist/types/css/property-descriptors/content";
+import WorkflowSelector from '@hubleto/react-ui/ext/WorkflowSelector';
 import moment from "moment";
 
 export interface HubletoFormProps extends FormProps {
@@ -41,7 +40,7 @@ export default class HubletoForm<P, S> extends Form<HubletoFormProps,HubletoForm
 
   getParentApp(): HubletoApp
   {
-    if (typeof this.parentApp == 'string') return globalThis.main.getApp(this.parentApp);
+    if (typeof this.parentApp == 'string') return globalThis.hubleto.getApp(this.parentApp);
     else return this.parentApp;
   }
 
@@ -92,9 +91,7 @@ export default class HubletoForm<P, S> extends Form<HubletoFormProps,HubletoForm
     const headerButtons = this.getHeaderButtons();
     return <>
       <div className='flex gap-2 items-center'>
-        {this.state.icon ?
-          <div><i className={this.state.icon + ' text-3xl text-primary/20 m-2'}></i></div>
-        : null}
+        <div>{this.state.icon ? <i className={this.state.icon + ' text-3xl text-primary/20 m-2'}></i> : null}</div>
         <div className='flex flex-col gap-2'>
           <div className='flex'>{super.renderHeaderLeft()}</div>
           {headerButtons && headerButtons.length > 0 ? <div className='flex gap-2'>{headerButtons.map((button, key) => {
@@ -132,28 +129,32 @@ export default class HubletoForm<P, S> extends Form<HubletoFormProps,HubletoForm
           <div>#{this.state.record.id}</div>
           <div>{this.renderPrevRecordButton()}</div>
           <div>{this.renderNextRecordButton()}</div>
+          {this.state.recordChanged ? <div className='badge badge-small badge-warning block '>{this.translate('unsaved changes')}</div> : null}
         </div>
-        <div>
+        <div className='flex gap-2 items-center'>
           {this.getRecordFormUrl() ? <>
             <a
-              className='btn btn-transparent btn-small'
+              className='text-sm text-gray-500 text-nowrap'
               title='Open in new tab'
-              href={globalThis.main.config.projectUrl + '/' + this.getRecordFormUrl()}
+              href={globalThis.hubleto.config.projectUrl + '/' + this.getRecordFormUrl()}
               target='_blank'
             >
-              <span className='icon'><i className='fas fa-link'></i></span>
-              <span className='text'>{globalThis.main.config.projectUrl + '/' + this.getRecordFormUrl()}</span>
+              {globalThis.hubleto.config.projectUrl + '/' + this.getRecordFormUrl()}
             </a>
             <button
-              className='btn btn-transparent btn-small'
+              className='btn btn-transparent'
               title='Copy link to clipboard'
               onClick={() => {
-                navigator.clipboard.writeText(globalThis.main.config.projectUrl + '/' + this.getRecordFormUrl());
+                navigator.clipboard.writeText(globalThis.hubleto.config.projectUrl + '/' + this.getRecordFormUrl());
               }}
             >
               <span className='icon'><i className='fas fa-copy'></i></span>
             </button>
           </> : null}
+          {this.state.description && this.state.description.inputs && this.state.description.inputs.shared_with
+            ? this.input('shared_with')
+            : null
+          }
         </div>
         {this.props.junctionModel ?
           <div className='badge flex gap-2'>
@@ -163,7 +164,8 @@ export default class HubletoForm<P, S> extends Form<HubletoFormProps,HubletoForm
             <div>#{this.props.junctionSourceRecordId}<br/></div>
           </div>
         : null}
-        <div>
+        <div className='flex gap-2'>
+          {this.renderCopyButton()}
           {this.renderDeleteButton()}
         </div>
       </div>
@@ -172,7 +174,7 @@ export default class HubletoForm<P, S> extends Form<HubletoFormProps,HubletoForm
 
   renderTopMenu(): null|JSX.Element {
     const topMenu = super.renderTopMenu();
-    const dynamicMenu = globalThis.main.injectDynamicContent(
+    const dynamicMenu = globalThis.hubleto.injectDynamicContent(
       this.constructor.name + ':TopMenu',
       {form: this}
     );
@@ -190,7 +192,7 @@ export default class HubletoForm<P, S> extends Form<HubletoFormProps,HubletoForm
           {this.state.description && this.state.description.inputs && this.state.description.inputs.is_closed
             ? <div className='text-right'>{this.inputWrapper('is_closed', {wrapperCssClass: 'flex gap-2'})}</div>
             : null
-        }
+          }
         </div>}
       </div>
     } else {
@@ -198,26 +200,22 @@ export default class HubletoForm<P, S> extends Form<HubletoFormProps,HubletoForm
     }
   }
 
-  renderContent(): null|JSX.Element {
-    const R = this.state.record;
-    let content = super.renderContent();
+  renderTimeline(timelineConfig: any): null|JSX.Element {
     let timeline = null;
     let timelinePointsUnsorted = {};
 
-    if (this.props.timeline) {
-      this.props.timeline.map((aboutEntry, key) => {
-        const entries = aboutEntry.data(this) ?? [];
-        
-        entries.map((entry, key) => {
-          timelinePointsUnsorted[aboutEntry.timestampFormatter(entry)] = {
-            icon: aboutEntry.icon,
-            color: aboutEntry.color,
-            value: aboutEntry.valueFormatter ? aboutEntry.valueFormatter(entry) : null,
-            userName: aboutEntry.userNameFormatter ? aboutEntry.userNameFormatter(entry) : null,
-          };
-        });
+    timelineConfig.map((aboutEntry, key) => {
+      const entries = aboutEntry.data(this) ?? [];
+      
+      entries.map((entry, key) => {
+        timelinePointsUnsorted[aboutEntry.timestampFormatter(entry)] = {
+          icon: aboutEntry.icon,
+          color: aboutEntry.color,
+          value: aboutEntry.valueFormatter ? aboutEntry.valueFormatter(entry) : null,
+          userName: aboutEntry.userNameFormatter ? aboutEntry.userNameFormatter(entry) : null,
+        };
       });
-    }
+    });
 
     let timelinePoints = Object.keys(timelinePointsUnsorted)
       .sort() // Sort the keys alphabetically
@@ -239,7 +237,7 @@ export default class HubletoForm<P, S> extends Form<HubletoFormProps,HubletoForm
           {days <= 0 ? null : <div className='badge text-xs'>{days} day(s)</div>}
           <div
             className='
-              flex flex-col items-center p-2 border-l border-l-4 overflow-hidden hover:shadow-sm
+              flex items-center p-2 border-l border-l-4 overflow-hidden hover:shadow-sm
               justify-center bg-white
             '
             style={{borderColor: entry.color}}
@@ -254,15 +252,26 @@ export default class HubletoForm<P, S> extends Form<HubletoFormProps,HubletoForm
     }
 
     if (timeline) {
-      return <div className='flex gap-2'>
-        <div className='grow'>{content}</div>
-        <div className='shrink p-2 flex flex-col items-center gap-2 max-w-48'>{timeline}</div>
-      </div>
+      return <div className='card card-body max-w-92 m-auto'>{timeline}</div>
     } else {
-      return content;
+      return null;
     }
-
   }
+
+  // renderContent(): null|JSX.Element {
+  //   const R = this.state.record;
+  //   let content = super.renderContent();
+
+  //   if (timeline) {
+  //     return <div className='flex gap-2'>
+  //       <div className='grow'>{content}</div>
+  //       <div className='shrink p-2 flex flex-col items-center gap-2 max-w-48'>{timeline}</div>
+  //     </div>
+  //   } else {
+  //     return content;
+  //   }
+
+  // }
 
 
 }

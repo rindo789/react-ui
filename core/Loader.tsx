@@ -5,7 +5,7 @@ import ReactDOM from 'react-dom';
 import * as uuid from 'uuid';
 import {isValidJson, kebabToPascal, camelToKebab, deepObjectMerge} from './Helper';
 import Dialog from "./Dialog";
-import Form, { FormProps, FormState } from "./Form";
+import Modal from "./Modal";
 
 export class HubletoReactUi {
   config: object = {};
@@ -13,7 +13,7 @@ export class HubletoReactUi {
   reactComponents: any = {};
   reactElementsWaitingForRender: number = 0;
   reactElements: Object = {};
-  renderedForms: Array<Form<FormProps, FormState>> = [];
+  renderedModals: Array<Modal> = [];
 
   primeReactTailwindTheme: any = {
     dataTable: {
@@ -25,6 +25,8 @@ export class HubletoReactUi {
   dictionary: any = null;
   lastShownDialogRef: any;
   defaultTranslationContext: string = 'app';
+
+  dynamicContentInjectors: any = {};
 
   /**
   * Define attributes which will not removed
@@ -42,59 +44,63 @@ export class HubletoReactUi {
     this.defaultTranslationContext = context;
   }
 
-  addFormToStack(form: Form<FormProps, FormState>) {
-    this.renderedForms.push(form);
-    // console.log('addFormToStack', this.renderedForms);
-    this.activateLastFormInStack();
+  translate(orig: string, context?: string, contextInner?: string): string {
+    return orig; // to be overridden
   }
 
-  removeFormFromStack(formToDelete: Form<FormProps, FormState>) {
+  addModalToStack(modal: Modal) {
+    this.renderedModals.push(modal);
+    // console.log('addModalToStack', this.renderedModals);
+    this.activateLastModalInStack();
+  }
+
+  removeModalFromStack(modalToDelete: Modal) {
     let keyToDelete = null;
-    this.renderedForms.map((form, key) => {
-      if (form.state.stackUid === formToDelete.state.stackUid) {
+    this.renderedModals.map((modal, key) => {
+      if (modal.state.stackUid === modalToDelete.state.stackUid) {
         keyToDelete = key;
       }
     })
     if (keyToDelete !== null) {
-      delete this.renderedForms[keyToDelete];
-      // console.log('removeFormFromStack', this.renderedForms);
-      this.activateLastFormInStack();
+      delete this.renderedModals[keyToDelete];
+      // console.log('removeModalFromStack', this.renderedModals);
+      this.activateLastModalInStack();
     }
   }
 
-  getActiveFormInStack() {
-    let activeForm = null;
+  getActiveModalInStack() {
+    let activeModal = null;
 
-    this.renderedForms.map((form, key) => {
-      if (form.state.isActive) activeForm = form;
+    this.renderedModals.map((modal, key) => {
+      if (modal.state.isActive) activeModal = modal;
     });
 
-    return activeForm;
+    return activeModal;
   }
 
-  activateLastFormInStack() {
-    let lastForm = null;
-    this.renderedForms.map((form, key) => {
-      if (form) lastForm = form;
+  activateLastModalInStack() {
+    let lastModal = null;
+    this.renderedModals.map((modal, key) => {
+      if (modal) lastModal = modal;
     });
 
-    // console.log('lastForm', lastForm);
-    if (lastForm) {
-      // console.log('lastForm.state.stackUid', lastForm.state.stackUid);
-      this.renderedForms.map((form, key) => {
-        if (form.state.stackUid != lastForm.state.stackUid) {
-          console.log('isActive: false', form.state.stackUid);
-          this.renderedForms[key].setState({isActive: false});
+    // console.log('lastModal', lastModal);
+    if (lastModal) {
+      // console.log('lastModal.state.stackUid', lastModal.state.stackUid);
+      this.renderedModals.map((modal, key) => {
+        if (modal.state.stackUid != lastModal.state.stackUid) {
+          // console.log('isActive: false', modal.state.stackUid);
+          this.renderedModals[key].setState({isActive: false});
         }
       })
-      // console.log('isActive: true', lastForm.state.stackUid);
-      lastForm.setState({isActive: true});
+      // console.log('isActive: true', lastModal.state.stackUid);
+      lastModal.setState({isActive: true});
     }
   }
 
   getValidationErrorMessage(messageString: string): JSX.Element {
     return <>
-      <b>Some inputs need your attention</b><br/>
+      <b>{this.translate('Some inputs need your attention')}</b><br/>
       <br/>
       {messageString}
     </>;
@@ -102,22 +108,24 @@ export class HubletoReactUi {
 
   getDuplicateEntryErrorMessage(message: string): JSX.Element {
     return <>
-      <b>Duplicate entry error</b><br/>
+      <b>{this.translate('Duplicate entry error')}</b><br/>
       <br/>
       <div>{message}</div>
     </>;
   }
 
-  getGenericErrorMessage(message: string, code: number): JSX.Element {
+  getGenericErrorMessage(message: string, code: number, details?: string): JSX.Element {
     return <>
-      <div>Error #{code}</div>
-      <pre style={{fontSize: '8pt', textAlign: 'left'}}>{message}</pre>
+      <pre className='text-red-800 text-base'>{message}</pre>
+      <div className='text-xs mt-4 text-gray-400'>
+        {code == 0 ? null : <div>Error #{code}</div>}
+        <div>{details}</div>
+      </div>
     </>;
   }
 
   showDialog(content: JSX.Element, props?: any) {
     const root = createRoot(document.getElementById('app-dialogs'));
-
     this.lastShownDialogRef = React.createRef();
 
     props.headerClassName = 'dialog-header ' + (props.headerClassName ?? '');
@@ -187,23 +195,31 @@ export class HubletoReactUi {
   }
 
   showDialogConfirm(content: JSX.Element, props?: any) {
+    const propsCloned = {...props};
     let defaultProps = {
       headerClassName: 'dialog-confirm-header',
       contentClassName: 'dialog-confirm-content',
       header: "Confirm",
       footer: <>
         <div className={"flex w-full justify-between"}>
-          <button className={"btn " + props.yesButtonClass} onClick={() => { this.lastShownDialogRef.current.hide(); props.onYes(); }} >
+          <button className={"btn " + propsCloned.yesButtonClass} onClick={() => { this.lastShownDialogRef.current.hide(); propsCloned.onYes(); }} >
             <span className="icon"><i className="fas fa-check"></i></span>
-            <span className="text">{props.yesText}</span>
+            <span className="text">{propsCloned.yesText}</span>
           </button>
-          <button className={"btn " + props.noButtonClass} onClick={() => { this.lastShownDialogRef.current.hide(); props.onNo(); }} >
+          <button className={"btn " + propsCloned.noButtonClass} onClick={() => { this.lastShownDialogRef.current.hide(); propsCloned.onNo(); }} >
             <span className="icon"><i className="fas fa-xmark"></i></span>
-            <span className="text">{props.noText}</span>
+            <span className="text">{propsCloned.noText}</span>
           </button>
         </div>
       </>
     };
+
+    delete props.yesButtonClass;
+    delete props.yesText;
+    delete props.onYes;
+    delete props.noButtonClass;
+    delete props.noText;
+    delete props.onNo;
 
     if (!props.headerClassName) props.headerClassName = defaultProps.headerClassName;
     if (!props.contentClassName) props.contentClassName = defaultProps.contentClassName;
@@ -392,4 +408,31 @@ export class HubletoReactUi {
     });
 
   }
+
+  registerDynamicContent(contentGroup: string, injector: any) {
+    if (!this.dynamicContentInjectors[contentGroup]) {
+      this.dynamicContentInjectors[contentGroup] = [];
+    }
+
+    this.dynamicContentInjectors[contentGroup].push(injector);
+  }
+
+  injectDynamicContent(contentGroup: string, injectorProps: any): Array<JSX.Element>|null {
+    if (this.dynamicContentInjectors && this.dynamicContentInjectors[contentGroup]) {
+      let dynamicContent: Array<JSX.Element> = [];
+      for (let i in this.dynamicContentInjectors[contentGroup]) {
+        dynamicContent.push(
+          React.createElement(
+            this.dynamicContentInjectors[contentGroup][i],
+            injectorProps
+          )
+        );
+      }
+      return dynamicContent;
+      // return dynamicContent.map((content, key) => <div key={key}>{content}</div>);
+    } else {
+      return null;
+    }
+  }
+
 }

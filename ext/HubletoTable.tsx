@@ -37,12 +37,20 @@ export default class HubletoTable<P, S> extends Table<HubletoTableProps, Hubleto
   refImportCsvModal: any;
   refColumnConfigModal: any;
 
+  refExportCsvForm: any;
+  refImportCsvForm: any;
+  refColumnsConfigScreen: any;
+
   constructor(props: HubletoTableProps) {
     super(props);
 
     this.refExportCsvModal = React.createRef();
     this.refImportCsvModal = React.createRef();
     this.refColumnConfigModal = React.createRef();
+
+    this.refExportCsvForm = React.createRef();
+    this.refImportCsvForm = React.createRef();
+    this.refColumnsConfigScreen = React.createRef();
   }
 
   getStateFromProps(props: HubletoTableProps) {
@@ -96,12 +104,19 @@ export default class HubletoTable<P, S> extends Table<HubletoTableProps, Hubleto
           const filterValue = this.state.filters[filterName] ?? (filter.default ?? null);
 
           return <div key={filterName}>
-            <div className='bg-primary/10 p-1 text-sm dark:text-white dark:bg-slate-800'>{filter.title}</div>
-            <div className="list">
+            {filter.title
+              ? <div className='bg-primary/10 p-1 text-sm dark:text-white dark:bg-slate-800'>{filter.title}</div>
+              : null
+            }
+            <div className={"list" + (filter.direction == "horizontal" ? " horizontal" : "")}>
               {Object.keys(filter.options).map((key: any) => {
                 return <button
                   key={key}
-                  className={"max-w-60 btn btn-small btn-list-item " + (filterValue == key ? "btn-primary" : "btn-transparent")}
+                  className={
+                    "max-w-60 btn btn-small btn-list-item "
+                    + (filterValue == key ? "btn-primary" : "btn-transparent")
+                    + (filter.direction == "horizontal" ? " text-center" : "")
+                  }
                   style={{borderLeft: (filter.colors && filter.colors[key] ? '0.5em solid ' + filter.colors[key] : null)}}
                   onClick={() => {
                     let filters = this.state.filters ?? {};
@@ -121,14 +136,20 @@ export default class HubletoTable<P, S> extends Table<HubletoTableProps, Hubleto
                         filters[filterName] = [ key ];
                       }
                     } else {
-                      filters[filterName] = key;
+                      console.log(filters, filterName, key);
+                      if (filters[filterName] == key) {
+                        delete filters[filterName];
+                      } else {
+                        filters[filterName] = key;
+                      }
+                      console.log(filters);
                     }
 
                     if (!this.props.parentForm) {
                       setUrlParam('filters', filters);
                     }
 
-                    this.setState({recordId: 0, filters: filters}, () => this.loadData());
+                    this.setState({recordId: 0, filters: filters}, () => this.reload());
                   }}
                 >
                   {filter.type == 'multipleSelectButtons' ?
@@ -222,11 +243,13 @@ export default class HubletoTable<P, S> extends Table<HubletoTableProps, Hubleto
       {this.state.showExportCsvScreen ?
         <ModalForm
           ref={this.refExportCsvModal}
+          form={this.refExportCsvForm}
           uid={this.props.uid + '_export_csv_modal'}
           isOpen={true}
           type='centered large'
         >
           <HubletoTableExportCsvForm
+            ref={this.refExportCsvForm}
             modal={this.refExportCsvModal}
             model={this.props.model}
             parentTable={this}
@@ -237,11 +260,13 @@ export default class HubletoTable<P, S> extends Table<HubletoTableProps, Hubleto
       {this.state.showImportCsvScreen ?
         <ModalForm
           ref={this.refImportCsvModal}
+          form={this.refImportCsvForm}
           uid={this.props.uid + '_import_csv_modal'}
           isOpen={true}
           type='centered large'
         >
           <HubletoTableImportCsvForm
+            ref={this.refImportCsvForm}
             modal={this.refImportCsvModal}
             model={this.props.model}
             parentTable={this}
@@ -252,12 +277,14 @@ export default class HubletoTable<P, S> extends Table<HubletoTableProps, Hubleto
       {this.state.showColumnConfigScreen ?
         <ModalForm
           ref={this.refColumnConfigModal}
+          form={this.refColumnsConfigScreen}
           uid={this.props.uid + '_columns_config_modal'}
           isOpen={true}
           type='right'
           title='Customize Columns'
         >
           <HubletoTableColumnsCustomize
+            ref={this.refColumnsConfigScreen}
             parentTable={this}
             tableTag={this.props.tag}
             tableModel={this.model}

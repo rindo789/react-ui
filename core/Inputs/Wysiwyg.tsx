@@ -85,7 +85,7 @@ export default class Wysiwyg extends Input<WysiwygInputProps, WysiwygInputState>
             }}
           >
             <span className='icon'><i className='fas fa-arrow-left'></i></span>
-            <span className='text'>Use this HTML code</span>
+            <span className='text'>{this.translate('Use this HTML code')}</span>
           </button>
         </div>
       }

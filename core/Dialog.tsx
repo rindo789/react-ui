@@ -10,7 +10,7 @@ export default class Dialog extends Component {
     super(props);
 
     if (this.props.uid) {
-      globalThis.main.reactElements[this.props.uid] = this;
+      globalThis.hubleto.reactElements[this.props.uid] = this;
     }
   }
 

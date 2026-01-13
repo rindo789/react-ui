@@ -52,7 +52,7 @@ export default class FileUpload extends Input<FileUploadInputProps, FileUploadIn
       ...this.state,
       files: files,
       isInitialized: true,
-      endpoint: globalThis.main.config.projectUrl + '/components/inputs/fileupload/upload?__IS_AJAX__=1'
+      endpoint: globalThis.hubleto.config.projectUrl + '/components/inputs/fileupload/upload?__IS_AJAX__=1'
         + (props.folderPath ? '&folderPath=' + props.folderPath : '')
         + (props.renamePattern ? '&renamePattern=' + props.renamePattern : '')
         + (props.accept ? '&accept=' + props.accept : '')
@@ -126,7 +126,7 @@ export default class FileUpload extends Input<FileUploadInputProps, FileUploadIn
 
   onUploadedImageClick(fileFullPath: string) {
     Swal.fire({
-      imageUrl: globalThis.main.config.projectUrl + '/upload/' + fileFullPath,
+      imageUrl: globalThis.hubleto.config.projectUrl + '/upload/' + fileFullPath,
       imageAlt: 'Image',
       showConfirmButton: false
     });

@@ -30,7 +30,7 @@ export default class HubletoTableExportCsvForm<P, S> extends Form<HubletoTableEx
 
   renderTitle(): JSX.Element {
     return <>
-      <h2>Export to CSV</h2>
+      <h2>{this.translate('Export to CSV')}</h2>
       <small>{this.props.model}</small>
     </>;
   }
@@ -66,8 +66,8 @@ export default class HubletoTableExportCsvForm<P, S> extends Form<HubletoTableEx
       </div>
       <table className="table-default dense mt-2">
         <thead>
-          <th>Column</th>
-          <th>Type</th>
+          <th>{this.translate('Column')}</th>
+          <th>{this.translate('Type')}</th>
         </thead>
         <tbody>
           {Object.keys(this.props.parentTable.state.description.columns).map((columnName) => {
@@ -91,11 +91,11 @@ export default class HubletoTableExportCsvForm<P, S> extends Form<HubletoTableEx
       })}
       <a
         className="btn btn-large mt-2"
-        href={globalThis.main.config.projectUrl + "/api/table-export-csv?" + qs.stringify(this.getExportParams(), { arrayFormat: 'brackets' })}
+        href={globalThis.hubleto.config.projectUrl + "/api/table-export-csv?" + qs.stringify(this.getExportParams(), { arrayFormat: 'brackets' })}
         target="_blank"
       >
         <span className="icon"><i className="fas fa-download"></i></span>
-        <span className="text">Export to CSV</span>
+        <span className="text">{this.translate('Export to CSV')}</span>
       </a>
     </div>;
   }

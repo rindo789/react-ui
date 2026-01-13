@@ -5,7 +5,7 @@ import * as uuid from 'uuid';
 interface EnumValuesInputProps extends InputProps {
   enumValues?: {};
   enumCssClasses?: {};
-  uiStyle?: 'select' | 'buttons';
+  uiStyle?: 'select' | 'buttons' | 'buttons-vertical';
 }
 
 export default class EnumValues extends Input<EnumValuesInputProps, InputState> {
@@ -89,8 +89,11 @@ export default class EnumValues extends Input<EnumValuesInputProps, InputState> 
           {Object.keys(this.props.enumValues).map((key: string|number) => this._renderOption(key))}
         </select>
       </>;
-    } else if (this.props.uiStyle == 'buttons') {
-      return <div ref={this.refInput} className="btn-group">{Object.keys(this.props.enumValues).map((key: string|number) => {
+    } else if (this.props.uiStyle == 'buttons' || this.props.uiStyle == 'buttons-vertical') {
+      return <div
+        ref={this.refInput}
+        className={"btn-group gap-1 " + (this.props.uiStyle == 'buttons-vertical' ? " flex-col w-full" : "")}
+      >{Object.keys(this.props.enumValues).map((key: string|number) => {
         const enumValue = this.props.enumValues ? (this.props.enumValues[key] ?? '') : '';
         const enumCssClass = this.props.enumCssClasses ? (this.props.enumCssClasses[key] ?? '') : '';
         return <button
@@ -99,7 +102,7 @@ export default class EnumValues extends Input<EnumValuesInputProps, InputState> 
             "btn " + (this.state.readonly && this.state.value != key ? "btn-disabled" : "")
             + " " + (this.state.value == key ? "btn-primary " + enumCssClass : "btn-transparent")
           }
-          onClick={() => { if (!this.state.readonly) this.onChange((this.state.value == key ? null : key)); }}
+          onClick={() => { if (!this.state.readonly) this.onChange(key); }}
         >
           <span className="text">{enumValue}</span>
         </button>;

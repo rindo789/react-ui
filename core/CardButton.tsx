@@ -24,7 +24,7 @@ export default class CardButton extends Component<CardButtonProps> {
           this.props.href ? (
             this.props.href.startsWith('/')
                 //@ts-ignore
-              ? globalThis.main.config.projectUrl + this.props.href
+              ? globalThis.hubleto.config.projectUrl + this.props.href
               : window.location.href + '/' + this.props.href
           ) : '#'
         }

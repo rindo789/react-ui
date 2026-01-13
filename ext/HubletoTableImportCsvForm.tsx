@@ -34,7 +34,7 @@ export default class HubletoTableImportCsvForm<P, S> extends Form<HubletoTableIm
 
   renderTitle(): JSX.Element {
     return <>
-      <h2>Import to CSV</h2>
+      <h2>{this.translate('Import to CSV')}</h2>
       <small>{this.props.model}</small>
     </>;
   }
@@ -67,7 +67,7 @@ export default class HubletoTableImportCsvForm<P, S> extends Form<HubletoTableIm
         <div className="alert alert-info">
           How to import:
           <ul>
-            <li className="ml-2">• Prepare your CSV file. Read <a href="" target="_blank" className="btn btn-transparent">this guide</a> to learn how the CSV file shall be structured.</li>
+            <li className="ml-2">• Prepare your CSV file. Read <a href="" target="_blank" className="btn btn-transparent">{this.translate('this guide')}</a> to learn how the CSV file shall be structured.</li>
             <li className="ml-2">• Upload the CSV file.</li>
             <li className="ml-2">• Start the import by clicking on "Import from CSV" button.</li>
           </ul>
@@ -98,7 +98,7 @@ export default class HubletoTableImportCsvForm<P, S> extends Form<HubletoTableIm
 
         {this.state.testResult && this.state.testResult.foundRecords ? <>
           <div className='mt-2'>
-            <div>Found following records</div>
+            <div>{this.translate('Found following records')}</div>
             <table className='table-default dense'>
               <thead>
                 <tr>

@@ -29,6 +29,8 @@ import { dateToEUFormat, datetimeToEUFormat } from "./Inputs/DateTime";
 
 import { deepObjectMerge } from "./Helper";
 import request from "./Request";
+import { classNames } from 'primereact/utils';
+import { css } from 'jquery';
 
 export interface TableEndpoint {
   describeTable: string,
@@ -70,11 +72,13 @@ export interface TableUi {
   showAddButton?: boolean,
   showFulltextSearch?: boolean,
   showColumnSearch?: boolean,
+  showAsPlainTable?: boolean,
   emptyMessage?: any,
   filters?: any,
   customFilters?: any,
   moreActions?: any,
   dataView?: any,
+  orderBy?: TableOrderBy,
 }
 
 export interface TableDescription {
@@ -118,7 +122,6 @@ export interface TableProps {
   params?: any,
   externalCallbacks?: ExternalCallbacks,
   itemsPerPage: number,
-  orderBy?: TableOrderBy,
   inlineEditingEnabled?: boolean,
   isInlineEditing?: boolean,
   isUsedAsInput?: boolean,
@@ -172,7 +175,6 @@ export interface TableState {
   activeRowId?: any,
   formEndpoint?: FormEndpoint,
   formProps?: FormProps,
-  orderBy?: TableOrderBy,
   page: number,
   itemsPerPage: number,
   fulltextSearch?: string,
@@ -188,6 +190,7 @@ export interface TableState {
   sidebarFilterHidden: boolean,
   invalidInputs: Array<InvalidInput>,
   tableUpdateIteration: number,
+  myRootUrl: string,
 }
 
 export default class Table<P, S> extends TranslatedComponent<TableProps, TableState> {
@@ -201,6 +204,7 @@ export default class Table<P, S> extends TranslatedComponent<TableProps, TableSt
 
   model: string;
   refFulltextSearchInput: any = null;
+  refForm: any = null;
   refFormModal: any = null;
 
 
@@ -209,9 +213,10 @@ export default class Table<P, S> extends TranslatedComponent<TableProps, TableSt
   constructor(props: TableProps) {
     super(props);
 
-    globalThis.main.reactElements[this.props.uid] = this;
+    globalThis.hubleto.reactElements[this.props.uid] = this;
 
     this.refFulltextSearchInput = React.createRef();
+    this.refForm = React.createRef();
     this.refFormModal = React.createRef();
 
     this.model = this.props.model ?? '';
@@ -221,14 +226,14 @@ export default class Table<P, S> extends TranslatedComponent<TableProps, TableSt
 
   getStateFromProps(props: TableProps): TableState {
     let state: any = {
-      endpoint: props.endpoint ? props.endpoint : (globalThis.main.config.defaultTableEndpoint ?? {
+      endpoint: props.endpoint ? props.endpoint : (globalThis.hubleto.config.defaultTableEndpoint ?? {
         describeTable: 'api/table/describe',
         loadTableData: 'api/record/load-table-data',
         deleteRecord: 'api/record/delete',
       }),
       recordId: props.recordId,
       activeRowId: props.recordId,
-      formEndpoint: props.formEndpoint ? props.formEndpoint : (globalThis.main.config.defaultFormEndpoint ?? null),
+      formEndpoint: props.formEndpoint ? props.formEndpoint : (globalThis.hubleto.config.defaultFormEndpoint ?? null),
       formProps: {
         model: this.model,
         uid: props.uid,
@@ -236,7 +241,6 @@ export default class Table<P, S> extends TranslatedComponent<TableProps, TableSt
       loadingData: false,
       page: 1,
       itemsPerPage: this.props.itemsPerPage,
-      orderBy: this.props.orderBy,
       inlineEditingEnabled: props.inlineEditingEnabled ? props.inlineEditingEnabled : false,
       isInlineEditing: props.isInlineEditing ? props.isInlineEditing : false,
       isUsedAsInput: props.isUsedAsInput ? props.isUsedAsInput : false,
@@ -250,6 +254,7 @@ export default class Table<P, S> extends TranslatedComponent<TableProps, TableSt
       sidebarFilterHidden: false,
       invalidInputs: props.invalidInputs ?? [],
       tableUpdateIteration: 0,
+      myRootUrl: window.location.protocol + "//" + window.location.host + window.location.pathname,
     };
 
     if (props.description) state.description = props.description;
@@ -347,7 +352,7 @@ export default class Table<P, S> extends TranslatedComponent<TableProps, TableSt
       // invalidInputs: this.props.invalidInputs,
       key: this.state.tableUpdateIteration,
       ref: this.dt,
-      value: (this.state.data?.data ?? []).filter((a: any) => a._toBeDeleted_ !== true),
+      value: this.state.data?.data, //(this.state.data?.data ?? []).filter((a: any) => a._toBeDeleted_ !== true),
       dataKey: "id",
       first: (this.state.page - 1) * this.state.itemsPerPage,
       paginator: totalRecords > this.state.itemsPerPage,
@@ -363,8 +368,8 @@ export default class Table<P, S> extends TranslatedComponent<TableProps, TableSt
       onRowUnselect: (event: DataTableUnselectEvent) => this.onRowUnselect(event),
       onPage: (event: DataTablePageEvent) => this.onPaginationChangeCustom(event),
       onSort: (event: DataTableSortEvent) => this.onOrderByChangeCustom(event),
-      sortOrder: sortOrders[this.state.orderBy?.direction ?? 'asc'],
-      sortField: this.state.orderBy?.field,
+      sortOrder: sortOrders[this.state.description?.ui?.orderBy?.direction ?? 'desc'],
+      sortField: this.state.description?.ui?.orderBy?.field ?? 'id',
       rowClassName: (rowData: any) => this.rowClassName(rowData),
       stripedRows: true,
       //globalFilter={globalFilter}
@@ -381,9 +386,25 @@ export default class Table<P, S> extends TranslatedComponent<TableProps, TableSt
           () => { this.onSelectionChange(); }
         )
       },
+      footer: () => {
+        let hiddenRecordsCount = 0;
+        let footer = [];
+
+        this.state.data?.data.map((item, index) => {
+          if (item._PERMISSIONS && !item._PERMISSIONS[1]) hiddenRecordsCount++;
+        })
+
+        if (hiddenRecordsCount > 0) {
+          footer.push(<div className='badge badge-warning'>⚠ {hiddenRecordsCount} records were hidden based on your permissions.</div>);
+        }
+
+        if (this.state.description?.ui?.showFooter) footer.push(this.renderFooter());
+
+        return footer;
+      }
     };
 
-    if (this.state.description?.ui?.showFooter) tableProps.footer = this.renderFooter();
+    
 
     return tableProps;
   }
@@ -402,11 +423,8 @@ export default class Table<P, S> extends TranslatedComponent<TableProps, TableSt
     if (this.props.descriptionSource == 'props') return;
 
     request.get(
-      '',
-      {
-        route: this.getEndpointUrl('describeTable'),
-        ...this.getEndpointParams(),
-      },
+      this.getEndpointUrl('describeTable'),
+      this.getEndpointParams(),
       (description: any) => {
         try {
 
@@ -430,13 +448,12 @@ export default class Table<P, S> extends TranslatedComponent<TableProps, TableSt
     } else {
       this.setState({loadingData: true}, () => {
         request.get(
-          '',
+          this.getEndpointUrl('loadTableData'),
           {
-            route: this.getEndpointUrl('loadTableData'),
             ...this.getEndpointParams(),
             filterBy: this.state.filterBy,
             model: this.model,
-            orderBy: this.state.orderBy,
+            orderBy: this.state.description?.ui?.orderBy,
             page: this.state.page ?? 0,
             itemsPerPage: this.state.itemsPerPage ?? 35,
             parentRecordId: this.props.parentRecordId ? this.props.parentRecordId : 0,
@@ -466,6 +483,7 @@ export default class Table<P, S> extends TranslatedComponent<TableProps, TableSt
   getFormProps(): FormProps {
     return {
       // isInitialized: false,
+      ref: this.refForm,
       modal: this.refFormModal,
       parentTable: this,
       uid: this.props.uid + '_form',
@@ -481,21 +499,12 @@ export default class Table<P, S> extends TranslatedComponent<TableProps, TableSt
       ...this.props.formCustomProps ?? {},
       customEndpointParams: this.state.customEndpointParams ?? {},
       onClose: () => {
-        const urlParams = new URLSearchParams(window.location.search);
-        urlParams.delete('recordId');
-        urlParams.delete('recordTitle');
-        if (Array.from(urlParams).length == 0) {
-          window.history.pushState({}, '', window.location.protocol + "//" + window.location.host + window.location.pathname);
-        } else {
-          window.history.pushState({}, "", '?' + urlParams.toString());
-        }
-
-        this.setState({ recordId: null });
+       this.closeForm();
       },
-      onSaveCallback: (form: Form<FormProps, FormState>, saveResponse: any, customSaveOptions?: any) => {
+      onSaveCallback: (form: Form<FormProps, FormState>, saveResponse: any) => {
         this.reload();
-        if (customSaveOptions && (customSaveOptions.closeAfterSave ?? false)) {
-          this.setState({ recordId: null });
+        if (this.props.closeFormAfterSave ?? false) {
+          this.closeForm();
         } else if (saveResponse && saveResponse.savedRecord.id) {
           this.openForm(saveResponse.savedRecord.id);
         }
@@ -518,6 +527,10 @@ export default class Table<P, S> extends TranslatedComponent<TableProps, TableSt
       type: this.state.recordId == -1 ? 'centered' : 'right',
       hideHeader: true,
       isOpen: this.state.recordId !== null,
+      form: this.refForm,
+      onClose: () => {
+        this.closeForm();
+      },
       ...this.props.formModal
     }
   }
@@ -588,7 +601,12 @@ export default class Table<P, S> extends TranslatedComponent<TableProps, TableSt
   }
 
   rowClassName(rowData: any): string {
-    return rowData.id === this.state.activeRowId ? 'highlighted' : '';
+    let cssClasses: any = [];
+
+    if (rowData._PERMISSIONS && !rowData._PERMISSIONS[1]) cssClasses.push('hidden-record');
+    if (rowData.id === this.state.activeRowId) cssClasses.push('highlighted');
+
+    return cssClasses.join(' ');
   }
 
   showAddButton(): boolean {
@@ -625,43 +643,64 @@ export default class Table<P, S> extends TranslatedComponent<TableProps, TableSt
   }
 
   renderMoreActionsButton(): JSX.Element {
-    if (this.state?.description?.ui?.moreActions) {
-      return <button className="btn btn-dropdown btn-transparent">
-        <span className="icon"><i className="fas fa-cog"></i></span>
-        <span className="text text-nowrap">{this.translate('More options', 'Hubleto\\Erp\\Loader', 'Components\\Table')}</span>
-        <span className="menu">
-          <div className="btn-list text-nowrap">
-            {this.state?.description?.ui?.moreActions.map((action, index) => {
-              const type = action.type ?? '';
+    let moreActions = [
+      {
+        title: 'Show as plain table',
+        type: 'onclick',
+        onClick: () => {
+          let description: any = this.state?.description ?? {};
+          if (!description.ui) description.ui = {};
+          description.ui.showAsPlainTable = true;
+          this.setState({description: description});
+        }
+      },
+      ...(this.state?.description?.ui?.moreActions ?? [])
+    ];
 
-              if (type == 'link') {
-                return <a key={index} className="btn btn-transparent btn-list-item" href={action.href}>
-                  <span className="icon"><i className="fas fa-grip-lines"></i></span>
-                  <span className="text">{action.title}</span>
-                </a>;
-              }
+    return <button className="btn btn-dropdown btn-transparent">
+      <span className="icon"><i className="fas fa-cog"></i></span>
+      <span className="text text-nowrap">{this.translate('More options', 'Hubleto\\Erp\\Loader', 'Components\\Table')}</span>
+      <span className="menu">
+        <div className="btn-list text-nowrap">
+          {moreActions.map((action, index) => {
+            const type = action.type ?? '';
 
-              if (type == 'stateChange') {
-                return <div
-                  key={index}
-                  className="btn btn-transparent btn-list-item"
-                  onClick={() => {
-                    let newState = this.state;
-                    newState[action.state] = action.value;
-                    this.setState(newState);
-                  }}
-                >
-                  <span className="icon"><i className="fas fa-grip-lines"></i></span>
-                  <span className="text">{action.title}</span>
-                </div>;
-              }
-            })}
-          </div>
-        </span>
-      </button>
-    } else {
-      return <></>;
-    }
+            if (type == 'onclick') {
+              return <div
+                key={index}
+                className="btn btn-transparent btn-list-item"
+                onClick={() => { action.onClick(); }}
+              >
+                <span className="icon"><i className="fas fa-grip-lines"></i></span>
+                <span className="text">{action.title}</span>
+              </div>;
+            }
+
+            if (type == 'link') {
+              return <a key={index} className="btn btn-transparent btn-list-item" href={action.href}>
+                <span className="icon"><i className="fas fa-grip-lines"></i></span>
+                <span className="text">{action.title}</span>
+              </a>;
+            }
+
+            if (type == 'stateChange') {
+              return <div
+                key={index}
+                className="btn btn-transparent btn-list-item"
+                onClick={() => {
+                  let newState = this.state;
+                  newState[action.state] = action.value;
+                  this.setState(newState);
+                }}
+              >
+                <span className="icon"><i className="fas fa-grip-lines"></i></span>
+                <span className="text">{action.title}</span>
+              </div>;
+            }
+          })}
+        </div>
+      </span>
+    </button>;
   }
 
   renderHeaderButtons(): Array<JSX.Element> {
@@ -822,9 +861,8 @@ export default class Table<P, S> extends TranslatedComponent<TableProps, TableSt
 
       if (recordToDelete) {
         request.get(
-          '',
+          this.getEndpointUrl('deleteRecord'),
           {
-            route: this.getEndpointUrl('deleteRecord'),
             ...this.getEndpointParams(),
             id: recordToDelete.id ?? 0,
             hash: recordToDelete._idHash_ ?? '',
@@ -851,7 +889,7 @@ export default class Table<P, S> extends TranslatedComponent<TableProps, TableSt
     }
 
     if (hasRecordsToDelete) {
-      return globalThis.main.showDialogConfirm(
+      return globalThis.hubleto.showDialogConfirm(
         this.translate('You are about to delete the record. Press OK to confirm.', 'Hubleto\\Erp\\Loader', 'Components\\Table'),
         {
           headerClassName: 'dialog-danger-header',
@@ -892,7 +930,7 @@ export default class Table<P, S> extends TranslatedComponent<TableProps, TableSt
 
   renderForm(): JSX.Element {
     if (this.props.formReactComponent) {
-      return globalThis.main.renderReactElement(this.props.formReactComponent, this.getFormProps()) ?? <></>;
+      return globalThis.hubleto.renderReactElement(this.props.formReactComponent, this.getFormProps()) ?? <></>;
     } else {
       return <Form {...this.getFormProps()} />;
     }
@@ -932,13 +970,24 @@ export default class Table<P, S> extends TranslatedComponent<TableProps, TableSt
     if (typeof column.cellRenderer == 'function') {
       return column.cellRenderer(this, data, options);
     } else if (typeof column.tableCellRenderer === 'string' && column.tableCellRenderer !== '') {
-      return globalThis.main.renderReactElement(column.tableCellRenderer, cellProps) ?? <></>;
+      return globalThis.hubleto.renderReactElement(column.tableCellRenderer, cellProps) ?? <></>;
     } else {
 
       let cellValueElement: JSX.Element|null = null;
 
       if (cellContent === null) {
-        cellValueElement = null;
+        switch (column.type) {
+          case 'lookup':
+            cellValueElement =
+              <span className='badge badge-small text-slate-300 p-1'>
+                N/A
+              </span>
+            ;
+          break;
+          default:
+            cellValueElement = null;
+          break;
+        }
       } else {
         switch (column.type) {
           case 'int':
@@ -966,7 +1015,7 @@ export default class Table<P, S> extends TranslatedComponent<TableProps, TableSt
             else {
               cellValueElement = <img
                 style={{ width: '30px', height: '30px' }}
-                src={globalThis.main.config.uploadUrl + "/" + cellContent}
+                src={globalThis.hubleto.config.uploadUrl + "/" + cellContent}
                 className="rounded"
               />;
             }
@@ -975,7 +1024,7 @@ export default class Table<P, S> extends TranslatedComponent<TableProps, TableSt
             if (!cellContent) cellValueElement = <i className="fas fa-image" style={{color: '#e3e6f0'}}></i>
             else {
               cellValueElement = <a
-                href={globalThis.main.config.uploadUrl + "/" + cellContent}
+                href={globalThis.hubleto.config.uploadUrl + "/" + cellContent}
                 target='_blank'
                 onClick={(e) => { e.stopPropagation(); }}
                 className='btn btn-primary-outline btn-small'
@@ -998,7 +1047,7 @@ export default class Table<P, S> extends TranslatedComponent<TableProps, TableSt
             }
             cellValueElement =
               <span className={className} style={style}>
-              {data['_LOOKUP[' + columnName + ']'] ?? ''}
+                {data['_LOOKUP[' + columnName + ']'] ?? ''}
               </span>
             ;
           break;
@@ -1038,6 +1087,26 @@ export default class Table<P, S> extends TranslatedComponent<TableProps, TableSt
                 return <span className="badge badge-info mx-1" key={item.id}>{item[column.dataKey]}</span>;
               })}
             </>
+          break;
+          case 'json':
+            let columnValueParsed = null;
+            try {
+              columnValueParsed = JSON.parse(columnValue);
+            } catch (ex) {
+              columnValueParsed = null;
+            }
+
+            if (columnValueParsed === null) {
+              cellValueElement = null;
+            } else if (Array.isArray(columnValueParsed)) {
+              cellValueElement = <>{columnValueParsed.map((item, index) => {
+                return <div key={index} className='badge block text-xs'>{item}</div>
+              })}</>;
+            } else {
+              cellValueElement = <>{Object.keys(columnValueParsed).map((key, index) => {
+                return <div key={index} className='badge block text-xs'>{key}: {columnValueParsed[key]}</div>
+              })}</>;
+            }
           break;
           default:
             cellValueElement = (typeof cellContent == 'object' ? JSON.stringify(cellContent) : cellContent);
@@ -1204,7 +1273,6 @@ export default class Table<P, S> extends TranslatedComponent<TableProps, TableSt
               value={columnSearchValue}
               onChange={(event) => {
                 this.setColumnSearch(columnName, event.value);
-                console.log(event);
               }}
               itemTemplate={(option: any) => <button className='btn btn-transparent'>
                 <span className='text'>{option.label}</span>
@@ -1286,28 +1354,32 @@ export default class Table<P, S> extends TranslatedComponent<TableProps, TableSt
           {columnSearchValuePrettyfied}
         </>) : null}
         body={(data: any, options: any) => {
-          return (
-            <div
-              key={'column-' + columnName}
-              className={
-                this.cellClassName(columnName, column, data)
-                + (data._toBeDeleted_ ? ' to-be-deleted' : '')
-              }
-              style={this.cellCssStyle(columnName, column, data)}
-            >
-              {this.renderCell(columnName, column, data, options)}
-              <div className='cell-buttons'>
-                <button
-                  className='btn btn-small btn-white'
-                  title='Copy cell contant to clipboard'
-                  onClick={(e) => {
-                    navigator.clipboard.writeText(data['_LOOKUP[' + columnName + ']'] ?? (data[columnName] ?? ''));
-                    e.stopPropagation();
-                  }}
-                ><span className='icon'><i className='fas fa-copy'></i></span></button>
+          if (data._PERMISSIONS && !data._PERMISSIONS[1]) { // can not read
+            return <div className='text-nowrap'>Hidden record</div>;
+          } else {
+            return (
+              <div
+                key={'column-' + columnName}
+                className={
+                  this.cellClassName(columnName, column, data)
+                  + (data._toBeDeleted_ ? ' to-be-deleted' : '')
+                }
+                style={this.cellCssStyle(columnName, column, data)}
+              >
+                {this.renderCell(columnName, column, data, options)}
+                <div className='cell-buttons'>
+                  <button
+                    className='btn btn-small btn-white'
+                    title='Copy cell content to clipboard'
+                    onClick={(e) => {
+                      navigator.clipboard.writeText(data['_LOOKUP[' + columnName + ']'] ?? (data[columnName] ?? ''));
+                      e.stopPropagation();
+                    }}
+                  ><span className='icon'><i className='fas fa-copy'></i></span></button>
+                </div>
               </div>
-            </div>
-          );
+            );
+          }
         }}
         style={{ width: 'auto' }}
         sortable
@@ -1326,11 +1398,33 @@ export default class Table<P, S> extends TranslatedComponent<TableProps, TableSt
   }
 
   renderDataView(): JSX.Element {
-    return <>
-      <DataTable {...this.getTableProps()}>
-        {this.renderColumns()}
-      </DataTable>
-    </>;
+    if (this.state.description?.ui?.showAsPlainTable) {
+      return <table className='table-default dense'>
+        <thead>
+          <tr>
+            {Object.keys(this.state.description?.columns).map((colName, columnIndex) => {
+              const column = this.state.description?.columns[colName];
+              return <th className='border-none'>{column.title}</th>;
+            })}
+          </tr>
+        </thead>
+        <tbody>
+          {this.state.data?.data.map((row, rowIndex) => {
+            return <tr>
+              {Object.keys(this.state.description?.columns).map((colName, columnIndex) => {
+                return <td className='border-none'>{row['_LOOKUP[' + colName + ']'] ?? row[colName]}</td>;
+              })}
+            </tr>;
+          })}
+        </tbody>
+      </table>;
+    } else {
+      return <>
+        <DataTable {...this.getTableProps()}>
+          {this.renderColumns()}
+        </DataTable>
+      </>;
+    }
   }
 
   renderContent(): JSX.Element {
@@ -1357,7 +1451,7 @@ export default class Table<P, S> extends TranslatedComponent<TableProps, TableSt
                   onClick={() => this.setState({sidebarFilterHidden: !this.state.sidebarFilterHidden})}
                 >
                   <span className="icon"><i className="fas fa-arrow-left"></i></span>
-                  <span className="text">Hide filter</span>
+                  <span className="text">{this.translate('Hide filter')}</span>
                 </button>
               }
             </div>
@@ -1373,7 +1467,7 @@ export default class Table<P, S> extends TranslatedComponent<TableProps, TableSt
 
   render() {
     try {
-      globalThis.main.setTranslationContext(this.translationContext);
+      globalThis.hubleto.setTranslationContext(this.translationContext);
 
       if (!this.state.data) {
         return <ProgressBar mode="indeterminate" style={{ height: '8px' }}></ProgressBar>;
@@ -1408,7 +1502,7 @@ export default class Table<P, S> extends TranslatedComponent<TableProps, TableSt
     // 1 == ASC
     // -1 == DESC
     // null == neutral icons
-    if (event.sortField == this.state.orderBy?.field) {
+    if (event.sortField == this.state.description?.ui?.orderBy?.field) {
       orderBy = {
         field: event.sortField,
         direction: event.sortOrder === 1 ? 'asc' : 'desc',
@@ -1475,6 +1569,20 @@ export default class Table<P, S> extends TranslatedComponent<TableProps, TableSt
     }
   }
 
+  closeForm() {
+    const urlParams = new URLSearchParams(window.location.search);
+    urlParams.delete('recordId');
+    urlParams.delete('recordTitle');
+
+    if (Array.from(urlParams).length == 0) {
+      window.history.pushState({}, '', this.state.myRootUrl);
+    } else {
+      window.history.pushState({}, '', this.state.myRootUrl + '?' + urlParams.toString());
+    }
+
+    this.setState({ recordId: null });
+  }
+
   onAddClick() {
     if (this.props.externalCallbacks && this.props.externalCallbacks.onAddClick) {
       window[this.props.externalCallbacks.onAddClick](this);
@@ -1484,7 +1592,9 @@ export default class Table<P, S> extends TranslatedComponent<TableProps, TableSt
   }
 
   onRowClick(row: any) {
-    if (this.props.externalCallbacks && this.props.externalCallbacks.onRowClick) {
+    if (row._PERMISSIONS && !row._PERMISSIONS[1]) return; // cannot read
+
+      if (this.props.externalCallbacks && this.props.externalCallbacks.onRowClick) {
       window[this.props.externalCallbacks.onRowClick](this, row.id ?? 0);
     } if (this.props.onRowClick) {
       this.props.onRowClick(this, row);
@@ -1520,7 +1630,6 @@ export default class Table<P, S> extends TranslatedComponent<TableProps, TableSt
     if (orderBy && this.props.data) {
       let data = this.props.data;
       if (orderBy.direction == "asc") {
-        console.log(data.data)
 
         data.data.sort((a, b) => {
           const valA = getValue(a[orderBy.field]);

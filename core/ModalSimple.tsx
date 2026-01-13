@@ -18,7 +18,7 @@ export default class ModalSimple extends Modal {
         >
           <div className="modal-inner">
             {this.props.showHeader ? <>
-              <div className="modal-header">
+              <div className={"modal-header " + (this.state.isActive ? "active" : "")}>
                 <div className="modal-header-left">{this.props.headerLeft}</div>
                 <div className="modal-header-title">{this.props.title}</div>
                 <div className="modal-header-right">
@@ -28,7 +28,7 @@ export default class ModalSimple extends Modal {
                     data-dismiss="modal"
                     aria-label="Close"
                     onClick={() => {
-                      if (this.props.onClose) this.props.onClose(this);
+                      this.close();
                     }}
                   ><span className="icon"><i className="fas fa-xmark"></i></span></button>
                 </div>
