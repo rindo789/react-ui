@@ -1,9 +1,9 @@
-import { FormTab } from '@hubleto/react-ui/core/Form';
+import { FormTab } from './Form';
 
-export type HubletoAppType = 'community' | 'external' | 'custom';
+export type AppType = 'community' | 'external' | 'custom';
 
-export default class HubletoApp {
-  type: HubletoAppType;
+export default class App {
+  type: AppType;
   namespace: string;
 
   formHeaderButtons: Array<any> = [];

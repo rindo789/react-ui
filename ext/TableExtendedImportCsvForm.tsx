@@ -3,24 +3,24 @@ import Form, { FormProps, FormState } from "@hubleto/react-ui/core/Form";
 import InputFile from "@hubleto/react-ui/core/Inputs/File";
 import request from "@hubleto/react-ui/core/Request";
 
-export interface HubletoTableImportCsvFormProps extends FormProps {}
-export interface HubletoTableImportCsvFormState extends FormState {
+export interface TableExtendedImportCsvFormProps extends FormProps {}
+export interface TableExtendedImportCsvFormState extends FormState {
   csvData: string,
   testResult?: any,
   importResult?: any,
 }
 
-export default class HubletoTableImportCsvForm<P, S> extends Form<HubletoTableImportCsvFormProps,HubletoTableImportCsvFormState> {
+export default class TableExtendedImportCsvForm<P, S> extends Form<TableExtendedImportCsvFormProps,TableExtendedImportCsvFormState> {
   static defaultProps: any = {
     ...Form.defaultProps
   };
 
-  props: HubletoTableImportCsvFormProps;
-  state: HubletoTableImportCsvFormState;
+  props: TableExtendedImportCsvFormProps;
+  state: TableExtendedImportCsvFormState;
 
   refCsvFileInput: any;
 
-  constructor(props: HubletoTableImportCsvFormProps) {
+  constructor(props: TableExtendedImportCsvFormProps) {
     super(props);
     this.refCsvFileInput = createRef();
 

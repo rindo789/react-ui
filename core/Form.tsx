@@ -723,7 +723,7 @@ export default class Form<P, S> extends TranslatedComponent<FormProps, FormState
     if (
       !customInputProps.wrapperCssClass
       && (
-        ['boolean', 'date', 'datetime', 'float'].indexOf(inputType) >= 0
+        ['boolean', 'date', 'datetime', 'decimal'].indexOf(inputType) >= 0
         || (inputType == 'int' && !enumValues)
       )
     ) {
@@ -954,6 +954,7 @@ export default class Form<P, S> extends TranslatedComponent<FormProps, FormState
         <span className="icon">
           <i className="fas fa-angle-left"></i>
         </span>
+        <span className="shortcut">Ctrl+Shift+PgUp</span>
       </button>
     );
   }
@@ -969,6 +970,7 @@ export default class Form<P, S> extends TranslatedComponent<FormProps, FormState
         <span className="icon">
           <i className="fas fa-angle-right"></i>
         </span>
+        <span className="shortcut">Ctrl+Shift+PgDn</span>
       </button>
     );
   }

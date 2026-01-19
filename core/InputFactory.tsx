@@ -36,7 +36,7 @@ export function InputFactory(inputProps: any): JSX.Element {
           case 'password': inputToRender = <InputPassword {...inputProps} />; break;
           case 'text': inputToRender = <InputTextarea {...inputProps} />; break;
           case 'json': inputToRender = <InputTextarea {...inputProps} />; break;
-          case 'float': case 'int': inputToRender = <InputInt {...inputProps} />; break;
+          case 'decimal': case 'int': inputToRender = <InputInt {...inputProps} />; break;
           case 'boolean': inputToRender = <InputBoolean {...inputProps} />; break;
           case 'lookup': inputToRender = <InputLookup {...inputProps} />; break;
           case 'color': inputToRender = <InputColor {...inputProps} />; break;

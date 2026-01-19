@@ -1,14 +1,14 @@
 import React, { Component } from 'react'
 import Table, { TableProps, TableState } from '@hubleto/react-ui/core/Table';
-import HubletoForm, { HubletoFormProps, HubletoFormState } from './HubletoForm';
-import HubletoTableExportCsvForm from './HubletoTableExportCsvForm';
-import HubletoTableImportCsvForm from './HubletoTableImportCsvForm';
+import FormExtended, { FormExtendedProps, FormExtendedState } from './FormExtended';
+import TableExtendedExportCsvForm from './TableExtendedExportCsvForm';
+import TableExtendedImportCsvForm from './TableExtendedImportCsvForm';
 import { getUrlParam } from '@hubleto/react-ui/core/Helper';
 import ModalForm from "@hubleto/react-ui/core/ModalForm";
-import HubletoTableColumnsCustomize from './HubletoTableColumnsCustomize';
+import TableExtendedColumnsCustomize from './TableExtendedColumnsCustomize';
 import { setUrlParam, deleteUrlParam } from "@hubleto/react-ui/core/Helper";
 
-export interface HubletoTableProps extends TableProps {
+export interface TableExtendedProps extends TableProps {
   junctionTitle?: string,
   junctionModel?: string,
   junctionSourceColumn?: string,
@@ -17,21 +17,21 @@ export interface HubletoTableProps extends TableProps {
   junctionSaveEndpoint?: string,
 }
 
-export interface HubletoTableState extends TableState {
+export interface TableExtendedState extends TableState {
   showExportCsvScreen: boolean,
   showImportCsvScreen: boolean,
   showColumnConfigScreen: boolean,
   collapsedNodeIds: Array<number>,
 }
 
-export default class HubletoTable<P, S> extends Table<HubletoTableProps, HubletoTableState> {
+export default class TableExtended<P, S> extends Table<TableExtendedProps, TableExtendedState> {
   static defaultProps = {
     ...Table.defaultProps,
     formUseModalSimple: true,
   }
 
-  props: HubletoTableProps;
-  state: HubletoTableState;
+  props: TableExtendedProps;
+  state: TableExtendedState;
 
   refExportCsvModal: any;
   refImportCsvModal: any;
@@ -41,7 +41,7 @@ export default class HubletoTable<P, S> extends Table<HubletoTableProps, Hubleto
   refImportCsvForm: any;
   refColumnsConfigScreen: any;
 
-  constructor(props: HubletoTableProps) {
+  constructor(props: TableExtendedProps) {
     super(props);
 
     this.refExportCsvModal = React.createRef();
@@ -53,7 +53,7 @@ export default class HubletoTable<P, S> extends Table<HubletoTableProps, Hubleto
     this.refColumnsConfigScreen = React.createRef();
   }
 
-  getStateFromProps(props: HubletoTableProps) {
+  getStateFromProps(props: TableExtendedProps) {
     return {
       ...super.getStateFromProps(props),
       showExportCsvScreen: false,
@@ -136,13 +136,11 @@ export default class HubletoTable<P, S> extends Table<HubletoTableProps, Hubleto
                         filters[filterName] = [ key ];
                       }
                     } else {
-                      console.log(filters, filterName, key);
                       if (filters[filterName] == key) {
                         delete filters[filterName];
                       } else {
                         filters[filterName] = key;
                       }
-                      console.log(filters);
                     }
 
                     if (!this.props.parentForm) {
@@ -168,8 +166,8 @@ export default class HubletoTable<P, S> extends Table<HubletoTableProps, Hubleto
   }
 
   renderForm(): JSX.Element {
-    let formProps: HubletoFormProps = this.getFormProps();
-    return <HubletoForm {...formProps}/>;
+    let formProps: FormExtendedProps = this.getFormProps();
+    return <FormExtended {...formProps}/>;
   }
 
   renderTree(nodes: any, idParent: number = 0, level: number = 0): JSX.Element {
@@ -247,14 +245,15 @@ export default class HubletoTable<P, S> extends Table<HubletoTableProps, Hubleto
           uid={this.props.uid + '_export_csv_modal'}
           isOpen={true}
           type='centered large'
+          onClose={() => {this.setState({showExportCsvScreen: false});}}
         >
-          <HubletoTableExportCsvForm
+          <TableExtendedExportCsvForm
             ref={this.refExportCsvForm}
             modal={this.refExportCsvModal}
             model={this.props.model}
             parentTable={this}
             onClose={() => { this.setState({showExportCsvScreen: false}); }}
-          ></HubletoTableExportCsvForm>
+          ></TableExtendedExportCsvForm>
         </ModalForm>
       : null}
       {this.state.showImportCsvScreen ?
@@ -264,14 +263,15 @@ export default class HubletoTable<P, S> extends Table<HubletoTableProps, Hubleto
           uid={this.props.uid + '_import_csv_modal'}
           isOpen={true}
           type='centered large'
+          onClose={() => { this.setState({showImportCsvScreen: false}); }}
         >
-          <HubletoTableImportCsvForm
+          <TableExtendedImportCsvForm
             ref={this.refImportCsvForm}
             modal={this.refImportCsvModal}
             model={this.props.model}
             parentTable={this}
             onClose={() => { this.setState({showImportCsvScreen: false}); }}
-          ></HubletoTableImportCsvForm>
+          ></TableExtendedImportCsvForm>
         </ModalForm>
       : null}
       {this.state.showColumnConfigScreen ?
@@ -282,14 +282,15 @@ export default class HubletoTable<P, S> extends Table<HubletoTableProps, Hubleto
           isOpen={true}
           type='right'
           title='Customize Columns'
+          onClose={() => { this.setState({showColumnConfigScreen: false}); }}
         >
-          <HubletoTableColumnsCustomize
+          <TableExtendedColumnsCustomize
             ref={this.refColumnsConfigScreen}
             parentTable={this}
             tableTag={this.props.tag}
             tableModel={this.model}
             onClose={() => this.setState({showColumnConfigScreen: false})}
-          ></HubletoTableColumnsCustomize>
+          ></TableExtendedColumnsCustomize>
         </ModalForm>
       : null}
     </>;

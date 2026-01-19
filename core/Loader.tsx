@@ -273,11 +273,14 @@ export class HubletoReactUi {
     if (domElement.nodeType == 3) { /* Text node: https://developer.mozilla.org/en-US/docs/Web/API/Node/nodeType */
       return <>{domElement.textContent}</>;
     } else {
-      if (domElement.tagName.substring(0, 4) != 'APP-') {
-        component = domElement.tagName.toLowerCase();
-      } else {
-        component = domElement.tagName.substring(4).toLowerCase();
+      if (domElement.tagName.substring(0, 4) == 'APP-') {
         isHubletoComponent = true;
+        component = domElement.tagName.substring(4).toLowerCase();
+      } else if (domElement.tagName.substring(0, 9) == 'HBLREACT-') {
+        isHubletoComponent = true;
+        component = domElement.tagName.substring(9).toLowerCase();
+      } else {
+        component = domElement.tagName.toLowerCase();
       }
 
       let attributesDoNotConvert: Array<string> = [];
@@ -370,8 +373,18 @@ export class HubletoReactUi {
 
     rootElement.querySelectorAll('*').forEach((element, _index) => {
 
-      if (element.tagName.substring(0, 4) != 'APP-') return;
+      if (
+        element.tagName.substring(0, 4) != 'APP-'
+        && element.tagName.substring(0, 9) != 'HBLREACT-'
+      ) return;
       if (element.attributes['hubleto-react-rendered']) return;
+
+      if (element.tagName.substring(0, 4) == 'APP-') {
+        console.warn(
+          'Using `<app-...>` tags in your HTML is deprecated. Use `<hblreact-...>` instead.'
+          + ' (found ' + element.tagName + ')'
+        );
+      }
 
       //@ts-ignore
       $(rootElement).addClass('react-elements-rendering');
@@ -390,12 +403,6 @@ export class HubletoReactUi {
       // https://blog.saeloun.com/2021/07/15/react-18-adds-new-root-api/
       requestIdleCallback(() => {
         this.reactElementsWaitingForRender--;
-
-        // console.log($(element), $(element).html());
-        // $(element).find('*').each((el) => {
-        //   console.log($(el));//, $(this).html());
-        //   // $(this).parent().before($(this));
-        // });
 
         if (this.reactElementsWaitingForRender <= 0) {
           //@ts-ignore

@@ -1,13 +1,13 @@
 import React, { Component } from "react";
 import Form, { FormDescription, FormProps, FormState } from "@hubleto/react-ui/core/Form";
 import request from '@hubleto/react-ui/core/Request';
-import HubletoApp from '@hubleto/react-ui/ext/HubletoApp'
+import App from '@hubleto/react-ui/core/App'
 
 //@ts-ignore
-import WorkflowSelector from '@hubleto/react-ui/ext/WorkflowSelector';
+import ErpWorkflowSelector from '@hubleto/react-ui/ext/ErpWorkflowSelector';
 import moment from "moment";
 
-export interface HubletoFormProps extends FormProps {
+export interface FormExtendedProps extends FormProps {
   icon?: string,
   junctionTitle?: string,
   junctionModel?: string,
@@ -18,27 +18,27 @@ export interface HubletoFormProps extends FormProps {
   renderWorkflowUi?: boolean,
   timeline?: Array<any>,
 }
-export interface HubletoFormState extends FormState {
+export interface FormExtendedState extends FormState {
   icon?: string,
 }
 
-export default class HubletoForm<P, S> extends Form<HubletoFormProps,HubletoFormState> {
+export default class FormExtended<P, S> extends Form<FormExtendedProps,FormExtendedState> {
   static defaultProps: any = {
     ...Form.defaultProps
   };
 
-  props: HubletoFormProps;
-  state: HubletoFormState;
+  props: FormExtendedProps;
+  state: FormExtendedState;
 
-  parentApp: string|HubletoApp;
+  parentApp: string|App;
 
-  constructor(props: HubletoFormProps) {
+  constructor(props: FormExtendedProps) {
     super(props);
 
     this.state = this.getStateFromProps(props);
   }
 
-  getParentApp(): HubletoApp
+  getParentApp(): App
   {
     if (typeof this.parentApp == 'string') return globalThis.hubleto.getApp(this.parentApp);
     else return this.parentApp;
@@ -188,7 +188,7 @@ export default class HubletoForm<P, S> extends Form<HubletoFormProps,HubletoForm
       return <div className='flex flex-col'>
         {topMenuWithDynamicMenu}
         {this.state.id <= 0 ? null : <div className='flex p-2 bg-gradient-to-b from-gray-50 to-white'>
-          <div className='flex-2'><WorkflowSelector parentForm={this}></WorkflowSelector></div>
+          <div className='flex-2'><ErpWorkflowSelector parentForm={this}></ErpWorkflowSelector></div>
           {this.state.description && this.state.description.inputs && this.state.description.inputs.is_closed
             ? <div className='text-right'>{this.inputWrapper('is_closed', {wrapperCssClass: 'flex gap-2'})}</div>
             : null

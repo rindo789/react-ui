@@ -5,31 +5,31 @@ import Lookup from '@hubleto/react-ui/core/Inputs/Lookup';
 import { ProgressBar } from 'primereact/progressbar';
 import request from "@hubleto/react-ui/core/Request";
 
-interface WorkflowSelectorProps {
+interface ErpWorkflowSelectorProps {
   parentForm: any,
   onWorkflowChange?: (idWorkflow: number, idWorkflowStep: number) => void,
   onWorkflowStepChange?: (idWorkflowStep: number, step: any) => void,
 }
 
-interface WorkflowSelectorState {
+interface ErpWorkflowSelectorState {
   workflows: Array<any>,
   history: Array<any>,
   changeWorkflow: boolean,
 }
 
-export default class WorkflowSelector<P, S> extends TranslatedComponent<WorkflowSelectorProps, WorkflowSelectorState> {
-  props: WorkflowSelectorProps;
-  state: WorkflowSelectorState;
+export default class ErpWorkflowSelector<P, S> extends TranslatedComponent<ErpWorkflowSelectorProps, ErpWorkflowSelectorState> {
+  props: ErpWorkflowSelectorProps;
+  state: ErpWorkflowSelectorState;
 
   translationContext: string = 'Hubleto\\App\\Community\\Workflow\\Loader\\Loader';
-  translationContextInner: string = 'Components\\WorkflowSelector';
+  translationContextInner: string = 'Components\\ErpWorkflowSelector';
 
-  constructor(props: WorkflowSelectorProps) {
+  constructor(props: ErpWorkflowSelectorProps) {
     super(props);
     this.state = this.getStateFromProps(props);
   }
 
-  getStateFromProps(props: WorkflowSelectorProps) {
+  getStateFromProps(props: ErpWorkflowSelectorProps) {
     return {
       workflows: null,
       history: null,

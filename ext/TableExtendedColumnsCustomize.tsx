@@ -1,25 +1,25 @@
 import React, { Component } from 'react';
 import request from '@hubleto/react-ui/core/Request';
-import HubletoTable, { HubletoTableProps, HubletoTableState } from './HubletoTable';
+import TableExtended, { TableExtendedProps, TableExtendedState } from './TableExtended';
 
-export interface HubletoTableColumnsCustomizeProps {
+export interface TableExtendedColumnsCustomizeProps {
   tableModel: string,
   tableTag: string,
   onClose: any,
-  parentTable: HubletoTable<HubletoTableProps,HubletoTableState>,
+  parentTable: TableExtended<TableExtendedProps,TableExtendedState>,
 }
 
-export interface HubletoTableColumnsCustomizeState {
+export interface TableExtendedColumnsCustomizeState {
   record: any,
   draggedKey: null,
 }
 
-export default class HubletoTableColumnsCustomize<P, S> extends Component {
+export default class TableExtendedColumnsCustomize<P, S> extends Component {
 
-  props: HubletoTableColumnsCustomizeProps;
-  state: HubletoTableColumnsCustomizeState;
+  props: TableExtendedColumnsCustomizeProps;
+  state: TableExtendedColumnsCustomizeState;
 
-  constructor(props: HubletoTableColumnsCustomizeProps) {
+  constructor(props: TableExtendedColumnsCustomizeProps) {
     super(props);
     this.state = {
       record: null,
@@ -49,6 +49,24 @@ export default class HubletoTableColumnsCustomize<P, S> extends Component {
   saveRecord(): void {
     request.post(
       "api/save-table-columns-customize",
+      {
+        record: this.state.record,
+        model: this.props.tableModel,
+        tag: this.props.tableTag,
+      },
+      {},
+      (data: any) => {
+        if (data.status == "success") {
+          this.props.onClose();
+          this.props.parentTable.loadTableDescription();
+        }
+      }
+    );
+  }
+
+  resetRecord(): void {
+    request.post(
+      "api/reset-table-columns-customize",
       {
         record: this.state.record,
         model: this.props.tableModel,
@@ -123,9 +141,10 @@ export default class HubletoTableColumnsCustomize<P, S> extends Component {
             </button>
           </div>
         </div>
-        {this.state.record ? (
-          <div className="p-2 flex flex-col gap-2">
+        <div className='modal-body'>
+          {this.state.record ? <div className="p-2 flex flex-col gap-2">
             {Object.entries(this.state.record).map(
+              //@ts-ignore
               ([key, { title, is_hidden }]) => (
                 <div
                   className="w-[100%]"
@@ -140,16 +159,19 @@ export default class HubletoTableColumnsCustomize<P, S> extends Component {
                     onClick={() =>
                       this.setState((prevState) => ({
                         record: {
+                          //@ts-ignore
                           ...prevState.record,
                           [key]: {
+                            //@ts-ignore
                             ...prevState.record[key],
+                            //@ts-ignore
                             is_hidden: !prevState.record[key].is_hidden,
                           },
                         },
                       }))
                     }
                   >
-                    <div className='flex flex-row'>
+                    <div className='flex flex-row items-center'>
                       <span className="icon">
                         <i className={`text-gray-500 fa fa-ellipsis-vertical`}></i>
                       </span>
@@ -162,10 +184,14 @@ export default class HubletoTableColumnsCustomize<P, S> extends Component {
                 </div>
               )
             )}
-          </div>
-        ) : (
-          <></>
-        )}
+          </div> : null}
+        </div>
+        <div className='modal-footer'>
+          <button className="btn btn-transparent" onClick={() => this.resetRecord()}>
+            <span className="icon"><i className="fas fa-refresh"></i></span>
+            <span className="text">Reset to default</span>
+          </button>
+        </div>
       </>
     );
   }

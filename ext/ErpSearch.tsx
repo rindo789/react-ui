@@ -3,12 +3,12 @@ import request from "@hubleto/react-ui/core/Request";
 import AsyncSelect from 'react-select/async'
 import { components } from "react-select";
 
-export interface HubletoSearchProps {
+export interface ErpSearchProps {
   endpoint: string,
   endpointParams?: any,
 }
 
-export interface HubletoSearchState {
+export interface ErpSearchState {
   // query?: any,
   results?: any
 }
@@ -28,13 +28,13 @@ const Option = (innerProps, isDisabled) => {
   )
 }
 
-export default class HubletoSearch<P, S> extends Component<HubletoSearchProps, HubletoSearchState> {
-  props: HubletoSearchProps;
-  state: HubletoSearchState;
+export default class ErpSearch<P, S> extends Component<ErpSearchProps, ErpSearchState> {
+  props: ErpSearchProps;
+  state: ErpSearchState;
 
   searchRef: any;
 
-  constructor(props: HubletoSearchProps) {
+  constructor(props: ErpSearchProps) {
     super(props);
 
     this.searchRef = React.createRef();

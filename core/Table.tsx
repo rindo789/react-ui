@@ -542,19 +542,13 @@ export default class Table<P, S> extends TranslatedComponent<TableProps, TableSt
       cellClassName += ' badge ' + (column.enumCssClasses ? (column.enumCssClasses[rowData[columnName]] ?? '') : '');
     } else {
       cellClassName += ' column-' + column.type;
-      // switch (column.type) {
-      //   case 'int':
-      //   case 'float':
-      //     cellClassName += ' text-right font-semibold';
-      //   break;
-      //   case 'date':
-      //   case 'datetime':
-      //     cellClassName += ' text-left';
-      //   break;
-      //   case 'lookup':
-      //     cellClassName += ' text-primary';
-      //   break;
-      // }
+      switch (column.type) {
+        case 'int':
+        case 'decimal':
+        case 'currency':
+          cellClassName += ' text-right';
+        break;
+      }
     }
 
     if (column.colorScale) {
@@ -625,6 +619,7 @@ export default class Table<P, S> extends TranslatedComponent<TableProps, TableSt
   renderAddButton(forEmptyMessage?: boolean): JSX.Element {
     return (
       <button
+        key="add-btn"
         className={"btn " + (forEmptyMessage ? "btn-white btn-small" : "btn-add")}
         onClick={() => this.onAddClick()}
       >
@@ -645,19 +640,22 @@ export default class Table<P, S> extends TranslatedComponent<TableProps, TableSt
   renderMoreActionsButton(): JSX.Element {
     let moreActions = [
       {
-        title: 'Show as plain table',
+        title: (this.state?.description?.ui?.showAsPlainTable ? 'Show as standard table' : 'Show as plain table'),
         type: 'onclick',
         onClick: () => {
           let description: any = this.state?.description ?? {};
           if (!description.ui) description.ui = {};
-          description.ui.showAsPlainTable = true;
+          description.ui.showAsPlainTable = !description.ui.showAsPlainTable;
           this.setState({description: description});
         }
       },
       ...(this.state?.description?.ui?.moreActions ?? [])
     ];
 
-    return <button className="btn btn-dropdown btn-transparent">
+    return <button
+      className="btn btn-dropdown btn-transparent"
+      key="more-actions-btn"
+    >
       <span className="icon"><i className="fas fa-cog"></i></span>
       <span className="text text-nowrap">{this.translate('More options', 'Hubleto\\Erp\\Loader', 'Components\\Table')}</span>
       <span className="menu">
@@ -710,12 +708,13 @@ export default class Table<P, S> extends TranslatedComponent<TableProps, TableSt
 
     if (this.state?.description?.ui?.filters) {
       buttons.push(
-        <button className="btn btn-transparent"
+        <button
+          className="btn btn-transparent"
+          key="filters-btn"
           onClick={() => this.setState({sidebarFilterHidden: !this.state.sidebarFilterHidden})}
         >
-          <span className="icon">
-            <i className={"fas fa-" + (this.state.sidebarFilterHidden ? "filter" : "filter")}></i>
-          </span>
+          <span className="icon"><i className="fas fa-filter"></i></span>
+          <span className="text">{this.translate('Show/Hide filter')}</span>
         </button>
       );
     }
@@ -997,12 +996,18 @@ export default class Table<P, S> extends TranslatedComponent<TableProps, TableSt
               {column.unit ? ' ' + column.unit : ''}
             </>;
           break;
-          case 'float':
+          case 'decimal':
             if (column.showExponential) cellContent = cellContent.toExponential();
             cellValueElement = <>
               {cellContent ? Number(cellContent).toFixed(column.decimals ?? 2) : null}
               {column.unit ? ' ' + column.unit : ''}
             </>;
+          break;
+          case 'currency':
+            cellValueElement = <span className={columnValue < 0 ? 'text-red-800' : 'text-green-800'}>
+              {cellContent ? globalThis.hubleto.currencyFormat(cellContent, column.decimals ?? 2) : null}
+              {column.unit ? ' ' + column.unit : ''}
+            </span>;
           break;
           case 'color':
             cellValueElement = <div
