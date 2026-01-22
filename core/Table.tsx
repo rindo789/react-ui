@@ -404,7 +404,7 @@ export default class Table<P, S> extends TranslatedComponent<TableProps, TableSt
       }
     };
 
-    
+
 
     return tableProps;
   }
@@ -1417,7 +1417,10 @@ export default class Table<P, S> extends TranslatedComponent<TableProps, TableSt
           {this.state.data?.data.map((row, rowIndex) => {
             return <tr>
               {Object.keys(this.state.description?.columns).map((colName, columnIndex) => {
-                return <td className='border-none'>{row['_LOOKUP[' + colName + ']'] ?? row[colName]}</td>;
+                const val = row['_LOOKUP[' + colName + ']'] ?? row[colName];
+                return <td className='border-none'>{
+                  (typeof val === 'object' && val !== null) ? val['_LOOKUP'] : val
+                }</td>;
               })}
             </tr>;
           })}
@@ -1663,9 +1666,11 @@ export default class Table<P, S> extends TranslatedComponent<TableProps, TableSt
         data: data
       });
     } else {
+      let updatedDescription = { ...this.state.description };
+      updatedDescription.ui.orderBy = orderBy;
       this.setState({
         ...stateParams,
-        orderBy: orderBy,
+        description: updatedDescription,
       }, () => this.loadData());
     }
   }

@@ -137,6 +137,7 @@ export default class TableExtendedColumnsCustomize<P, S> extends Component {
             >
               <span className="icon">
                 <i className="fas fa-xmark"></i>
+                <span className="shortcut">Esc</span>
               </span>
             </button>
           </div>
