@@ -115,7 +115,8 @@ export default class Varchar<P, S> extends Input<InputProps, VarcharInputState> 
           className={
             (this.state.invalid ? 'is-invalid' : '')
             + " " + (this.props.cssClass ?? "")
-            + " " + (this.state.readonly ? "bg-muted" : "")
+            + " " + (this.state.readonly ? "bg-muted" : "bg-white dark:bg-slate-800 dark:text-white dark:border-slate-700")
+            + " border border-slate-200 rounded-sm p-1 w-full"
           }
           disabled={this.state.readonly}
         />

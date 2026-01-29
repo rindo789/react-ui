@@ -391,6 +391,7 @@ export default class Form<P, S> extends TranslatedComponent<FormProps, FormState
     this.setState({
       isInitialized: true,
       record: record,
+      originalRecord: JSON.parse(JSON.stringify(record)),
       permissions: p,
       readonly: !(p.canUpdate || p.canCreate),
     }, () => {
@@ -752,6 +753,7 @@ export default class Form<P, S> extends TranslatedComponent<FormProps, FormState
       onInlineEditSave: () => { this.saveRecord(); },
       onChange: (input: any, value: any) => {
         let record = {...this.state.record};
+        if (value === '') value = null;
         record[inputName] = value;
         this.setState({
           record: record,

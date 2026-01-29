@@ -187,7 +187,7 @@ export default class FormExtended<P, S> extends Form<FormExtendedProps,FormExten
     if (this.props.renderWorkflowUi) {
       return <div className='flex flex-col'>
         {topMenuWithDynamicMenu}
-        {this.state.id <= 0 ? null : <div className='flex p-2 bg-gradient-to-b from-gray-50 to-white'>
+        {this.state.id <= 0 ? null : <div className='flex p-2 bg-gradient-to-b from-gray-50 to-white dark:from-gray-900 dark:to-gray-800'>
           <div className='flex-2'><ErpWorkflowSelector parentForm={this}></ErpWorkflowSelector></div>
           {this.state.description && this.state.description.inputs && this.state.description.inputs.is_closed
             ? <div className='text-right'>{this.inputWrapper('is_closed', {wrapperCssClass: 'flex gap-2'})}</div>
